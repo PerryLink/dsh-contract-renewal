@@ -1,0 +1,12 @@
+$ node samples/quickstart/run.mjs --check
+dsh-contract-renewal quickstart - 5 synthetic contracts (not customer data)
+as of 2026-12-01, within 90 days: 1 expired / 2 in renewal window / 1 expiring soon / 1 later
+expired: DEMO-MSA-2026-001 2026-11-15 (-16 days)
+window: DEMO-NDA-2026-002 2026-12-01 (0 days, window 30)
+window: DEMO-SAAS-2026-003 2026-12-20 (19 days, window 60)
+soon: DEMO-LEASE-2026-004 2027-01-15 (45 days, window 30)
+CSV exports/contracts-2026-12-01.csv: 5 rows, 629 bytes, sha256 ccbf0cfdae86...
+duplicate guard: E_CONTRACT_DUPLICATE
+CSV escaping: counterparty with comma -> quoted; quote -> doubled
+golden samples/quickstart/expected/result.json matches
+quickstart ok

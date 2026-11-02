@@ -1,0 +1,15 @@
+[
+  {
+    "path": "docs/assets/quickstart.png",
+    "kind": "quickstart",
+    "alt": "dsh-contract-renewal quickstart terminal output",
+    "caption": "Real command: node samples/quickstart/run.mjs --check — five synthetic DEMO-* contracts sorted into expired / renewal-window / soon-due groups as of 2026-12-01, with a quoted CSV and a duplicate guard. Rendered from the captured terminal output.",
+    "command": "node samples/quickstart/run.mjs --check",
+    "run_at": "2026-11-02T15:02:36Z",
+    "output_sha256": "b227d72c3a771cc8571c6ed7770b3c69718546f52f0414182f32157bc014da5c",
+    "output_path": "samples/quickstart/expected/result.json",
+    "log": "docs/assets/quickstart.log",
+    "log_sha256": "6428cc1b61f6b8350e6464b2265dc5c07e551eed12d30f7f888c2fcecf01e223",
+    "image_sha256": "222d92ababeb687c32e28e3fe403249c9907ac303d266dd6bdd824ab2d00a3fe"
+  }
+]

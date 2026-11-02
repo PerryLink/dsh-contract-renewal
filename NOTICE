@@ -1,0 +1,7 @@
+dsh-contract-renewal
+Copyright 2026 PerryLink
+
+This product includes software developed by PerryLink.
+
+It has no third-party runtime dependencies beyond the DeepSeek Harness
+peer packages (@deepseek-ai/cordis and @deepseek-ai/dsh-tools).

@@ -1,0 +1,11 @@
+req_id,metric,threshold,actual,script,evidence_sha256,pass,source,counted
+CR-A01,registry rows,5,5,scripts/acceptance.mjs,23193b3f4ac9bd8f7b744e8a89185a663ec52e7b28730fbb44b8a23a40c2867f,true,public/synthetic,false
+CR-A02,duplicate guard,E_CONTRACT_DUPLICATE,E_CONTRACT_DUPLICATE,scripts/acceptance.mjs,23193b3f4ac9bd8f7b744e8a89185a663ec52e7b28730fbb44b8a23a40c2867f,true,public/synthetic,false
+CR-A03,upcoming groups,1 expired / 2 window / 1 soon / 1 later,1/2/1/1,scripts/acceptance.mjs,23193b3f4ac9bd8f7b744e8a89185a663ec52e7b28730fbb44b8a23a40c2867f,true,public/synthetic,false
+CR-A04,window boundary days_left,-16|0/30,-16|0/30,scripts/acceptance.mjs,23193b3f4ac9bd8f7b744e8a89185a663ec52e7b28730fbb44b8a23a40c2867f,true,public/synthetic,false
+CR-A05,empty registry,total=0 + header only,total=0 rows=0,scripts/acceptance.mjs,23193b3f4ac9bd8f7b744e8a89185a663ec52e7b28730fbb44b8a23a40c2867f,true,public/synthetic,false
+CR-A06,invalid ISO date,E_CONTRACT_DATE_INVALID,E_CONTRACT_DATE_INVALID,scripts/acceptance.mjs,23193b3f4ac9bd8f7b744e8a89185a663ec52e7b28730fbb44b8a23a40c2867f,true,public/synthetic,false
+CR-A07,CSV quoting,comma+quote escaped,escaped,scripts/acceptance.mjs,23193b3f4ac9bd8f7b744e8a89185a663ec52e7b28730fbb44b8a23a40c2867f,true,public/synthetic,false
+CR-A08,CSV sha256,matches file,1e1899d003f7,scripts/acceptance.mjs,23193b3f4ac9bd8f7b744e8a89185a663ec52e7b28730fbb44b8a23a40c2867f,true,public/synthetic,false
+CR-A09,export path safety,traversal rejected,E_CONTRACT_PATH_INVALID,scripts/acceptance.mjs,23193b3f4ac9bd8f7b744e8a89185a663ec52e7b28730fbb44b8a23a40c2867f,true,public/synthetic,false
+CR-QS01,quickstart golden,1/1,1,samples/quickstart/run.mjs,b227d72c3a771cc8571c6ed7770b3c69718546f52f0414182f32157bc014da5c,true,synthetic/quickstart,true
