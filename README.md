@@ -114,7 +114,7 @@ No. It only computes dates and amounts from the registry: no contract body parsi
 
 ## Version
 
-`0.1.0-alpha.1` · 23 tests passing (`node --test test/*.test.mjs`).
+`0.1.0` · 23 tests passing (`node --test test/*.test.mjs`).
 
 ## Install
 

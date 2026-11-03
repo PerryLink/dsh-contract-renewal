@@ -116,7 +116,7 @@ later:   DEMO-SUPPORT-2026-005 2027-03-31 (120 days) — 只在 counts.later
 
 ## 版本
 
-`0.1.0-alpha.1` · 23 项测试通过（`node --test test/*.test.mjs`）。
+`0.1.0` · 23 项测试通过（`node --test test/*.test.mjs`）。
 
 ## 安装
 
