@@ -1,17 +1,28 @@
 <div align="center">
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-flow-dark.svg">
+  <img src="docs/assets/dsh-contract-renewal-flow-light.svg" width="100%" alt="dsh-contract-renewal 管线：contracts.csv → contract.ingest 校验并追加到 contracts.jsonl（R1）→ contract.upcoming 按 as_of 分三组并给出 days_left（R0）→ contract.report 导出带 sha256 的 CSV（R1），文件落在 $DSH_HOME/storages/dsh-contract-renewal/exports/；全程本地，不读合同正文">
+</picture>
+
 # dsh-contract-renewal
 
-> **Official repository.** The only official repository for this package, maintained by PerryLink. Apache-2.0.
+**登记合同 → 按指定日期看已过期 / 续签窗口 / N 天内到期 → 导出 CSV。**
 
-[![npm](https://img.shields.io/npm/v/dsh-contract-renewal)](https://www.npmjs.com/package/dsh-contract-renewal)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+面向 DeepSeek Harness 的纯本地合同到期登记工具：七个字段一行，三组互斥、剩余天数一目了然，只做日期与登记表计算——不解析合同正文、不发提醒、不联网。
 
-**Register contracts → list expired / renewal-window / soon-due exposure as of a date → export CSV.**
+[安装](#三步上手) · [配置](#配置) · [FAQ](#faq) · [简体中文](README.md) · [English](README.en.md) · [Español](README.es.md) · [Português](README.pt.md) · [हिन्दी](README.hi.md)
 
-> **Status: alpha / public synthetic / partial / not counted / not GA.** No customer data, no customer evidence, no production-availability claim.
+[![License](https://img.shields.io/badge/license-Apache--2.0-3366CC?style=flat-square&labelColor=2B3245)](LICENSE)
+[![DSH](https://img.shields.io/badge/DSH-%E2%89%A50.2.1%20%3C0.4.0-4B67B4?style=flat-square&labelColor=2B3245)](#兼容性)
+[![npm](https://img.shields.io/npm/v/dsh-contract-renewal?style=flat-square&labelColor=2B3245&color=CB3837)](https://www.npmjs.com/package/dsh-contract-renewal)
+[![CI](https://img.shields.io/github/actions/workflow/status/PerryLink/dsh-contract-renewal/ci.yml?branch=main&label=CI&style=flat-square&labelColor=2B3245)](https://github.com/PerryLink/dsh-contract-renewal/actions/workflows/ci.yml)
+[![Node](https://img.shields.io/badge/node-%E2%89%A524.9%20%3C25-339933?style=flat-square&labelColor=2B3245)](#兼容性)
 
-[English](README.md) · [简体中文](README-zh.md)
+[![Stars](https://img.shields.io/github/stars/PerryLink/dsh-contract-renewal?style=flat-square&labelColor=2B3245)](https://github.com/PerryLink/dsh-contract-renewal/stargazers)
+[![npm downloads](https://img.shields.io/npm/dm/dsh-contract-renewal?style=flat-square&labelColor=2B3245&color=CB3837)](https://www.npmjs.com/package/dsh-contract-renewal)
+[![dshfind](https://dshfind.com/api/badge/PerryLink/dsh-contract-renewal?metric=downloads)](https://dshfind.com/plugins/PerryLink/dsh-contract-renewal?ref=badge)
+[![Gitee](https://img.shields.io/badge/Gitee-mirror-C71D23?style=flat-square&labelColor=2B3245&logo=gitee)](https://gitee.com/perrylink/dsh-contract-renewal)
 
 ```sh
 dsh plugin --profile <profile> add dsh-contract-renewal
@@ -19,163 +30,228 @@ dsh plugin --profile <profile> add dsh-contract-renewal
 
 </div>
 
-## One-liner
+<sub>社区插件，与 DeepSeek 官方无关。唯一官方仓库：<https://github.com/PerryLink/dsh-contract-renewal>（Gitee 为镜像），其他账号下的同名仓库与本项目无关。</sub>
 
-Keep a local registry of contract metadata (number, counterparty, start/end dates, renewal-window days, owner, amount), project it onto one `as_of` date into three mutually exclusive groups — expired, in renewal window, due within N days — with the remaining days, then export CSV.
+<sub>状态：alpha / 公开合成 / partial / not counted / 非 GA——不含客户数据、客户证据，也不作生产可用声明。</sub>
 
-> It only does date/registry arithmetic. It does **not** parse contract text, judge clauses, send reminders, or replace legal advice.
+## 它是什么
 
-## Fit / not a fit
+一句话：把合同的编号、对方、起止日、续签窗口天数、负责人和金额登记到本地，按某个 `as_of` 日期分成「已过期 / 已进入续签窗口 / N 天内到期」三组并给出剩余天数，再导出 CSV。
 
-- **Fit**: a legal, procurement or admin team with a batch of contracts that needs one consistent view of “what already expired and what needs renewal”; a registry and due list to hand to a reviewer; a local CSV to pivot or load elsewhere.
-- **Not a fit**: parsing contract PDFs/Word (use `dsh-legal-clause`); receiving and deduplicating email (use `dsh-legal-intake`); automatically sending renewal mail or calling an OA/CLM; a multi-tenant contract system with approvals and per-role permissions; deciding whether a contract should be renewed.
+> 只做日期与登记表计算，**不解析合同正文、不判断条款、不发提醒、不替代法务意见**。
 
-## Input
+- **适合**：法务/采购/行政手里有一批合同，需要按统一口径看「哪些已经过期、哪些该续签了」；要把登记表和到期清单交给同事复核；要把本地台账导出 CSV 再做透视或入库。
+- **不适合**：解析合同 PDF/Word 正文、抽取条款（请用 `dsh-legal-clause`）；收邮件、去重、分派（请用 `dsh-legal-intake`）；自动发续签邮件或调用 OA/CLM；需要多租户、审批流、权限分级的生产合同系统；替代律师判断某份合同能不能续。
 
-- One registry CSV or one `contract.ingest` call per contract. Each row has seven fields:
-  `contract_no` (unique), `counterparty`, `start_date`, `end_date` (strict `YYYY-MM-DD`), `renewal_window_days` (integer 0–3650), `owner`, `amount` (non-negative, at most two decimals).
-- Dates must be real ISO dates. `2026-02-30`, `2026-13-01` and `2026/12/01` all fail with `E_CONTRACT_DATE_INVALID`.
-- Contract numbers are unique case-insensitively inside one registry; a duplicate fails with `E_CONTRACT_DUPLICATE`.
-- The registry lives at `$DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl` (one JSON object per line). Contract files are never read or modified.
+## 三步上手
 
-## Output
+1. **安装**（三选一）：
 
-- `contract.ingest`: `{ contract_no, counterparty, start_date, end_date, renewal_window_days, owner, amount, total }`, where `total` is the registry row count.
-- `contract.upcoming`: `{ as_of, within_days, expired, in_renewal_window, expiring_soon, counts }`; every item carries `days_left` (negative = expired) and `status`.
-- `contract.report`: path, filename, `sha256`, row count, bytes and `as_of`; the CSV is written under `$DSH_HOME/storages/dsh-contract-renewal/exports/`.
+   ```sh
+   # npm 通道（推荐，已发布版本）
+   dsh plugin --profile <profile> add dsh-contract-renewal
+   # git 通道（最新 main；等价于 git+https://github.com/PerryLink/dsh-contract-renewal.git）
+   dsh plugin --profile <profile> add github:PerryLink/dsh-contract-renewal
+   # tarball 通道：本仓库 pnpm pack 后
+   dsh plugin --profile <profile> add ./dsh-contract-renewal-<version>.tgz
+   ```
 
-The three groups are **mutually exclusive** — one contract appears at most once for a given `as_of`:
+2. **最小配置**（没有 Config 键，`cordis.patch.yml` 只插入这一行）：
 
-| Group | Rule | Note |
+   ```yaml
+   - insert:
+       - id: dsh-contract-renewal
+         name: dsh-contract-renewal
+   ```
+
+3. **验证已生效**：
+
+   ```sh
+   dsh --profile <profile> --dump-config | grep dsh-contract-renewal
+   node samples/quickstart/run.mjs --check
+   ```
+
+**卸载**：`dsh plugin --profile <profile> remove dsh-contract-renewal`（或从 profile patch 删掉该行）。
+
+## 核心能力
+
+工具名是稳定 API；工具说明保留英文以匹配运行时输出。
+
+| 工具 | 用途 | 风险 |
 |---|---|---|
-| `expired` | `days_left < 0` | Always listed, however long ago it expired |
-| `in_renewal_window` | `0 ≤ days_left ≤ renewal_window_days` | The renewal window wins over the “N days” bucket |
-| `expiring_soon` | not in the window and `days_left ≤ within_days` | Due within N days but not yet in the window |
-| not returned | everything else | Counted only in `counts.later` |
+| `contract.ingest` | 登记一份合同，写 `contracts.jsonl`；非法日期 / 重复编号有稳定错误码 | R1 local write |
+| `contract.upcoming` | 按 `as_of` 分组并返回 `days_left`；默认今天（UTC）、90 天 | R0 |
+| `contract.report` | 导出带引号转义的 CSV，返回路径、sha256、行数、字节数 | R1 local write |
 
-`as_of` defaults to **today (UTC)**; `within_days` defaults to 90. All date math uses UTC calendar days, so the local time zone, DST and `TZ` cannot shift a result.
+- **三组互斥，一份合同只出现一次** —— `expired`（已过期）、`in_renewal_window`（已进续签窗口）、`expiring_soon`（N 天内到期但还没进窗口）；其余只进 `counts.later`，不会重复计数。
+- **追加式本地登记表** —— 一行一份合同，落在 `$DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl`；原合同文件不读、不改，续签用新编号保留历史。
+- **UTC 日历天** —— 所有日期先转成 UTC 日序号再相减，不受本机时区、夏令时或 `TZ` 影响。
+- **CSV 导出可校验** —— RFC 4180 引号转义，返回 `sha256`、行数与字节数；文件名只允许单段安全名字，越界路径直接拒绝。
+- **失败关闭** —— 非法日期、重复编号、越界窗口、越权路径都返回 `<一句人话>（E_CONTRACT_XXX）｜下一步：<动作>`，不静默。
 
-## Example
+### 分组与边界的精确定义
 
-Copy this sentence:
+1. `end_date < as_of` → `expired`，`days_left` 为负。
+2. `0 ≤ days_left ≤ renewal_window_days` → `in_renewal_window`。`days_left = 0`（今天到期）和 `days_left = renewal_window_days`（窗口第一天）都算窗口内。
+3. 不在窗口内且 `days_left ≤ within_days` → `expiring_soon`；`days_left = within_days` 恰好算 N 天内，`within_days + 1` 不算。
+4. 其余 → `later`，只进 `counts.later`，不出现在三组里。
+
+## 输入
+
+- 一个合同登记表（CSV）或逐条调用 `contract.ingest`；每行 7 个字段：
+  `contract_no`（唯一编号）、`counterparty`（对方名称）、`start_date`、`end_date`（严格 `YYYY-MM-DD`）、`renewal_window_days`（0–3650 的整数）、`owner`（负责人）、`amount`（非负数字，最多两位小数）。
+- 日期必须是真实存在的 ISO 日期；`2026-02-30`、`2026-13-01`、`2026/12/01` 都会报 `E_CONTRACT_DATE_INVALID`。
+- 合同编号在同一登记表内**不区分大小写**唯一；重复登记报 `E_CONTRACT_DUPLICATE`。
+- 登记表存放在 `$DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl`，一行一份合同；原合同文件不读、不改。
+
+## 输出
+
+- `contract.ingest`：`{ contract_no, counterparty, start_date, end_date, renewal_window_days, owner, amount, total }`，`total` 是登记表当前条数。
+- `contract.upcoming`：`{ as_of, within_days, expired, in_renewal_window, expiring_soon, counts }`；每条含 `days_left`（负数=已过期）和 `status`。
+- `contract.report`：CSV 文件路径、文件名、`sha256`、行数、字节数与 `as_of`；文件写到 `$DSH_HOME/storages/dsh-contract-renewal/exports/`。
+
+三组**互斥**，每份合同在一个 `as_of` 下只出现一次：
+
+| 分组 | 条件 | 说明 |
+|---|---|---|
+| `expired` | `days_left < 0` | 已过期，无论过期多久都会列出 |
+| `in_renewal_window` | `0 ≤ days_left ≤ renewal_window_days` | 已进入续签窗口，窗口优先于「N 天内」 |
+| `expiring_soon` | 不在窗口内，且 `days_left ≤ within_days` | N 天内到期但还没进窗口 |
+| 不返回 | 其余 | 只在 `counts.later` 计数 |
+
+`as_of` 默认取**今天（UTC）**，`within_days` 默认 90。日期运算全部使用 UTC 日历天，不受本机时区、夏令时或 `TZ` 影响。
+
+## 示例
+
+直接复制下面这句：
 
 > 把这 5 份合同登记进来，按 2026-12-01 看哪些已过期、哪些进了续签窗口、90 天内到期，再导出一份 CSV。
 
-Re-run the bundled sample and verify the golden file:
+### 工具面调用
+
+```sh
+# 1) 登记一份合同
+#    工具面：contract.ingest({ contract_no: "DEMO-MSA-2026-001", counterparty: "…",
+#             start_date: "2026-01-01", end_date: "2026-11-15",
+#             renewal_window_days: 60, owner: "王敏", amount: 128000 })
+
+# 2) 看某一天的三组
+#    工具面：contract.upcoming({ as_of: "2026-12-01", within_days: 90 })
+
+# 3) 导出 CSV
+#    工具面：contract.report({ as_of: "2026-12-01", filename: "contracts-2026-12-01.csv" })
+```
+
+用自带样例复跑并核对金标：
 
 ```sh
 node samples/quickstart/run.mjs --check
 ```
 
-![dsh-contract-renewal quickstart terminal output](docs/assets/quickstart.png)
+![dsh-contract-renewal quickstart 真实运行输出](docs/assets/quickstart.png)
 
-The sample is five synthetic `DEMO-*` contracts with `as_of=2026-12-01` and `within_days=90`:
+样例是 5 份合成合同（`DEMO-*`，无真实主体/金额），`as_of=2026-12-01`、`within_days=90`：
 
 ```text
 expired: DEMO-MSA-2026-001 2026-11-15 (-16 days)
 window:  DEMO-NDA-2026-002 2026-12-01 (0 days, window 30)
 window:  DEMO-SAAS-2026-003 2026-12-20 (19 days, window 60)
 soon:    DEMO-LEASE-2026-004 2027-01-15 (45 days, window 30)
-later:   DEMO-SUPPORT-2026-005 2027-03-31 (120 days) — later only
+later:   DEMO-SUPPORT-2026-005 2027-03-31 (120 days) — 只在 counts.later
 ```
 
-`samples/quickstart/expected/result.json` is the real stdout of `node samples/quickstart/run.mjs --json`, not hand-written. Counterparties deliberately contain a comma and a quote (`华东合成制造有限公司, 上海分公司`, `Northwind "APAC" Ltd.`) to exercise both CSV escapes; re-registering the first contract returns `E_CONTRACT_DUPLICATE`.
+金标 `samples/quickstart/expected/result.json` 由 `node samples/quickstart/run.mjs --json` 真实产生，不是手写；截图就是 `--check` 的真实终端输出（原始日志见 [`docs/assets/quickstart.log`](docs/assets/quickstart.log)）。
 
-## Permissions
+样例里的对方名称故意包含逗号和引号（`华东合成制造有限公司, 上海分公司`、`Northwind "APAC" Ltd.`），用来验证 CSV 两种转义；重复登记第一份合同会返回 `E_CONTRACT_DUPLICATE`。
 
-Read: the user-supplied contract registry CSV (sample: `samples/quickstart/input/contracts.csv`); no other directory, no contract body files.
-Write: `$DSH_HOME/storages/dsh-contract-renewal/` (`contracts.jsonl` and `exports/*.csv`); original files are untouched.
-Network: no.
-External systems: none.
+## 配置
 
-`contract.upcoming` is **R0** (read-only); `contract.ingest` and `contract.report` are **R1** (local write, restricted to the directory above). `DSH_CONTRACT_HOME` overrides the local write root for tests; the default is exactly `$DSH_HOME/storages/dsh-contract-renewal`.
+本插件**没有 Config 键**——`cordis.patch.yml` 只插入上面那一行，挂载后三个工具即可用；所有可调项都在工具调用参数上：
+
+| 工具 | 参数 | 必填 | 默认 | 含义 |
+|---|---|---|---|---|
+| `contract.ingest` | 7 个合同字段 | 是 | — | 编号、对方、起止日、续签窗口、负责人、金额 |
+| `contract.upcoming` | `as_of` | 否 | 今天（UTC） | 分组基准日，`YYYY-MM-DD`；显式传入可复现「今天」 |
+| `contract.upcoming` | `within_days` | 否 | `90` | 「N 天内到期」的 N，0–3650 的整数 |
+| `contract.report` | `as_of` | 否 | 今天（UTC） | 导出时的分组基准日 |
+| `contract.report` | `within_days` | 否 | `90` | 导出时用的 N |
+| `contract.report` | `filename` | 否 | `contracts-<as_of>.csv` | 只允许 `[A-Za-z0-9._-]`，不接受路径 |
+
+profile patch 示例（没有 config 段，只有身份行）：
+
+```yaml
+- insert:
+    - id: dsh-contract-renewal
+      name: dsh-contract-renewal
+```
+
+测试可用环境变量 `DSH_CONTRACT_HOME` 覆盖本地写根目录；默认严格等于 `$DSH_HOME/storages/dsh-contract-renewal`。
 
 ## FAQ
 
-### 1. Why are old expired contracts still listed?
+<details>
+<summary>为什么已过期的合同还会出现在列表里？</summary>
 
-Exposing missed renewals is the point of the `expired` group, so it is not cut off by `within_days`. Items are sorted by `days_left`, most overdue first.
+`expired` 分组就是要暴露漏续签的合同，所以不按 `within_days` 截断，过期多久都会列出。按 `days_left` 从最负开始排序，最严重的排在最前。
 
-### 2. Can a contract appear in both “due within N days” and “renewal window”?
+</details>
 
-No. The groups are mutually exclusive: expired first, then renewal window, then the N-day bucket. If `within_days=30` but a contract has a 60-day window, it stays in `in_renewal_window` even at 45 days left.
+<details>
+<summary>「N 天内到期」和「续签窗口」会不会重复算？</summary>
 
-### 3. Can a time zone shift a date by one day?
+不会。三组互斥，先判过期，再判续签窗口，最后才判 N 天。即使 `within_days=30` 而某合同的续签窗口是 60 天，只要它还有 45 天到期，也归 `in_renewal_window`，不会同时进 `expiring_soon`。
 
-No. Dates are converted to UTC day numbers before subtraction; no local-time or DST arithmetic is involved. When `as_of` is omitted it is UTC today. The test suite runs the same fixtures under `TZ=UTC`, `America/Los_Angeles` and `Pacific/Kiritimati` and compares the output byte for byte.
+</details>
 
-### 4. How do I update a renewed contract?
+<details>
+<summary>日期会不会因为时区差一天？</summary>
 
-The registry is append-only. Register a new contract number such as `DEMO-MSA-2026-001-v2` and keep the old row for history. Do not hand-edit `contracts.jsonl`.
+不会。所有日期先转成 UTC 日序号再相减，不做本地时间/DST 运算；`as_of` 省略时也取 UTC 今天。测试用 `TZ=UTC`、`America/Los_Angeles`、`Pacific/Kiritimati` 三个时区跑同一组数据，结果逐字节一致。
 
-### 5. Does it read the PDF, send reminders or upload anything?
+</details>
 
-No. It only computes dates and amounts from the registry: no contract body parsing, no email/OA calls, no network, no model call. Use `dsh-legal-clause` for clause coverage.
+<details>
+<summary>合同续签了怎么更新？</summary>
 
-## Version
+登记表是追加式（append-only），不覆盖历史。请用新的合同编号登记，例如 `DEMO-MSA-2026-001-v2`，保留旧记录用于追溯；不要手工改 `contracts.jsonl`。
 
-`0.1.0` · 23 tests passing (`node --test test/*.test.mjs`).
+</details>
 
-## Install
+<details>
+<summary>会读合同 PDF、发提醒或上传数据吗？</summary>
 
-```sh
-dsh plugin --profile <profile> add dsh-contract-renewal
-dsh --profile <profile> --dump-config | grep dsh-contract-renewal
-```
+都不会。它只算登记表里的日期和金额，不读合同正文、不发邮件/OA、不联网、不调用模型。条款覆盖请配合 `dsh-legal-clause` 使用。
 
-Uninstall:
+</details>
 
-```sh
-dsh plugin --profile <profile> remove dsh-contract-renewal
-```
+## 权限与数据
 
-### Install channels
+读：用户指定的合同登记 CSV（样例：`samples/quickstart/input/contracts.csv`）；不读其他目录、不读合同正文文件。  
+写：`$DSH_HOME/storages/dsh-contract-renewal/`（`contracts.jsonl` 与 `exports/*.csv`）；不改原文件。  
+联网：否。  
+外部系统：无。
 
-- **npm (recommended):** `dsh plugin --profile <profile> add dsh-contract-renewal`
-- **git:** `dsh plugin --profile <profile> add github:PerryLink/dsh-contract-renewal`
-- **tarball:** `pnpm pack`, then `dsh plugin --profile <profile> add ./dsh-contract-renewal-<version>.tgz`
+`contract.upcoming` 标 **R0**（只读）；`contract.ingest` 与 `contract.report` 标 **R1**（本地写，只写上面的目录）。可用 `DSH_CONTRACT_HOME` 覆盖本地写根目录（测试用），默认严格等于 `$DSH_HOME/storages/dsh-contract-renewal`。
 
-## Tools
+## 错误码
 
-Tool names are a stable API; descriptions stay in English to match runtime output.
-
-| Tool | Purpose | Risk |
+| 错误码 | 何时出现 | 下一步 |
 |---|---|---|
-| `contract.ingest` | Register one contract into `contracts.jsonl`; stable codes for bad dates/duplicates | R1 local write |
-| `contract.upcoming` | Group by `as_of` with `days_left`; defaults to UTC today and 90 days | R0 |
-| `contract.report` | Export a quoted CSV and return path, sha256, rows and bytes | R1 local write |
+| `E_CONTRACT_DATE_INVALID` | 日期不是真实的 `YYYY-MM-DD`（如 `2026-02-30`、`2026/12/01`、带时间的串） | 改成严格的 `YYYY-MM-DD`，并确认日期真实存在 |
+| `E_CONTRACT_DUPLICATE` | 同一登记表已有该编号（比较时不分大小写） | 续签/改签换新编号（如 `-v2`）登记，保留历史 |
+| `E_CONTRACT_DATE_RANGE` | 到期日早于起始日 | 检查 `start_date` / `end_date` 是否写反 |
+| `E_CONTRACT_WINDOW_INVALID` | 续签窗口或统计天数不是 0–3650 的整数 | 传 0–3650 的整数，如 `renewal_window_days: 60` |
+| `E_CONTRACT_AMOUNT_INVALID` | 金额为负、超过两位小数或超过 1e12 | 写成纯数字，最多两位小数；没有金额写 `0` |
+| `E_CONTRACT_FIELD_REQUIRED` / `E_CONTRACT_FIELD_INVALID` | 必填字段为空，或名称含换行/制表符/超长 | 补齐字段；对方 ≤200 字、负责人 ≤120 字 |
+| `E_CONTRACT_NO_INVALID` | 编号格式不对（须字母或数字开头，只含字母、数字、点、下划线、连字符，≤64 位） | 按业务编号规范改写，例如 `DEMO-MSA-2026-001` |
+| `E_CONTRACT_STORE_FAILED` | 登记表读不出来或写不进去 | 确认 `$DSH_HOME/storages/dsh-contract-renewal` 可写 |
+| `E_CONTRACT_EXPORT_FAILED` / `E_CONTRACT_PATH_INVALID` / `E_CONTRACT_PATH_NOT_ALLOWED` | CSV 没写出去、文件名不安全或路径越界 | 只传 `[A-Za-z0-9._-]` 组成的文件名 |
 
-### Exact group boundaries
+报错原文格式：`<一句人话>（E_CONTRACT_XXX）｜下一步：<一个动作>`。更多排查见 [TROUBLESHOOTING.md](TROUBLESHOOTING.md)。
 
-1. `end_date < as_of` → `expired`, `days_left` negative.
-2. `0 ≤ days_left ≤ renewal_window_days` → `in_renewal_window`; both 0 (due today) and the window size are inside.
-3. Outside the window and `days_left ≤ within_days` → `expiring_soon`; exactly `within_days` is inside, `within_days + 1` is not.
-4. Everything else → `later`, counted but not returned.
+## 验收证据
 
-## Quick start
-
-```sh
-# 1) register one contract
-#    tool surface: contract.ingest({ contract_no: "DEMO-MSA-2026-001", counterparty: "…",
-#                  start_date: "2026-01-01", end_date: "2026-11-15",
-#                  renewal_window_days: 60, owner: "王敏", amount: 128000 })
-
-# 2) look at one date
-#    tool surface: contract.upcoming({ as_of: "2026-12-01", within_days: 90 })
-
-# 3) export CSV
-#    tool surface: contract.report({ as_of: "2026-12-01", filename: "contracts-2026-12-01.csv" })
-```
-
-Run the sample:
-
-```sh
-node samples/quickstart/run.mjs --check
-```
-
-## Acceptance evidence
-
-Public/synthetic fixtures live in `samples/quickstart/`; `ACCEPTANCE.csv` records the checks (everything except the quickstart row is `counted=false`).
+公开/合成 fixture 在 `samples/quickstart/`；`ACCEPTANCE.csv` 记录检查，除 quickstart 行外均为 `counted=false`。
 
 | req_id | metric | threshold | actual | pass | source | counted |
 |---|---|---|---|---|---|---|
@@ -184,20 +260,44 @@ Public/synthetic fixtures live in `samples/quickstart/`; `ACCEPTANCE.csv` record
 | CR-A07 | CSV quoting | comma+quote escaped | escaped | true | public/synthetic | false |
 | CR-QS01 | quickstart golden | 1/1 | 1 | true | synthetic/quickstart | true |
 
-*Fixture-backed acceptance rows, not a customer run; no output is invented.*
+*这是 fixture 支撑的验收行，不是客户运行；没有编造输出。*
 
-## Limits and known limitations
+## 边界与已知限制
 
-- Registry and date arithmetic only; no contract body parsing, clause review or legal judgement.
-- No automatic renewal notice; no email, OA, CLM, e-signature or external system.
-- Append-only JSONL: no in-place update/delete. Register a new number for a renewal.
-- Uniqueness is case-insensitive (`toUpperCase()`); add a suffix if your numbering is case-sensitive.
-- Amount validation is non-negative, ≤ 2 decimals and ≤ 1e12; no FX, tax or currency conversion.
-- Dates are limited to years 1000–9999; windows and `within_days` are integers 0–3650.
-- CSV is RFC 4180 only; formula prefixes are not stripped. Do not open untrusted CSV in Excel.
-- Public/synthetic samples only; alpha/partial, not counted, not a GA or production claim.
+- 只做登记表与日期计算，不解析合同正文、不校验条款、不做法律判断。
+- 不自动发送续签提醒，不调用邮件、OA、CLM、电子签或任何外部系统。
+- 登记表是追加式 JSONL，不提供原地更新/删除；续签请用新编号登记，避免丢历史。
+- 编号唯一性按 `toUpperCase()` 比较；如果你的编号体系区分大小写，请在命名时自行加后缀区分。
+- 金额只校验非负、最多两位小数和上限 1e12，不做币种换算、汇率或税务处理。
+- 日期范围限定 1000–9999 年；`renewal_window_days` 与 `within_days` 限定 0–3650 的整数。
+- CSV 只做 RFC 4180 引号转义，不做 Excel 公式前缀清洗；不要用 Excel 直接打开来源不明的 CSV。
+- 仅公开/合成样例；alpha/partial、not counted，不作 GA 或生产可用声明。
 
-## Development
+## 兼容性
+
+| 维度 | 状态 |
+|---|---|
+| Harness | `dsh >=0.2.1-rc.3 <0.4.0` |
+| Node | `>=24.9.0 <25` |
+| 平台 | 全平台；仅本地文件 |
+| 数据 | 不联网、不调用模型、不上传 |
+
+当前版本 `0.1.0`，23 项测试通过（`node --test test/*.test.mjs`）。
+
+## 生态与质量
+
+- [Gitee 镜像](https://gitee.com/perrylink/dsh-contract-renewal)（同步镜像，以 GitHub 为准）
+- [dshfind 插件页](https://dshfind.com/plugins/PerryLink/dsh-contract-renewal)（安装量与排名）
+- **1024 商店渠道**：先 `npm i -g dsh1024`，再 `dsh1024 plugin --profile <profile> add dsh-contract-renewal`（计入 [deepseek1024.com](https://deepseek1024.com) 安装排行）
+- [生态实测知识库](https://perrylink.github.io/dsh-plugin-guide/)：插件开发指南 · 选型实测数据 · 维护取舍判据
+
+## 相关项目
+
+- [dsh-legal-intake](https://github.com/PerryLink/dsh-legal-intake) — 法务邮件收件、去重、分类
+- [dsh-legal-clause](https://github.com/PerryLink/dsh-legal-clause) — 条款树与 12 项条款覆盖
+- [dsh-contract-pack](https://github.com/PerryLink/dsh-contract-pack) — 把三个插件串成端到端场景
+
+## 开发
 
 ```sh
 pnpm install
@@ -206,21 +306,18 @@ node --test test/*.test.mjs
 node scripts/gate.mjs
 ```
 
-## Compatibility
+配图由 [`scripts/gen-readme-assets.py`](scripts/gen-readme-assets.py) 程序化生成（Python 标准库、纯 SVG 流程图、图内只用命令 token、深浅双版），可重复执行；`docs/assets/quickstart.png` 为真实运行截图，配合 `docs/assets/quickstart.log` 一并保留。
 
-| Dimension | Status |
-|---|---|
-| Harness | `dsh >=0.2.1-rc.3 <0.4.0` |
-| Node | `>=24.9.0 <25` |
-| Platforms | All; local files only |
-| Data | No network, no model call, no upload |
+Topics：`dsh`, `dsh-plugin`, `deepseek-harness`, `deepseek`, `contract`, `renewal`, `expiry`, `legal`, `csv`, `perrylink`
 
-## Related work
+## 家族与致谢
 
-- [dsh-legal-intake](https://github.com/PerryLink/dsh-legal-intake) — legal email intake, dedupe and classification
-- [dsh-legal-clause](https://github.com/PerryLink/dsh-legal-clause) — clause tree and 12-key coverage
-- [dsh-contract-pack](../dsh-contract-pack/README.md) — the three plugins as one end-to-end scenario
+本项目是 [PerryLink](https://github.com/PerryLink) 维护的 DeepSeek Harness 插件家族成员（全部 Apache-2.0）。如果这个插件帮到了你，**给个 star**——它不解锁任何功能，但会让下一个人更容易找到它。
+
+- [@PerryLink](https://github.com/PerryLink) —— 创建者与维护者：合同登记表与 UTC 日期引擎、三组互斥投影、CSV 导出与路径安全、quickstart 金标样例、五语文档。
 
 ## License
 
-Apache-2.0. See `LICENSE`, `NOTICE`.
+[LICENSE](LICENSE)（Apache License 2.0）© 2026 dsh-contract-renewal contributors。另见 `NOTICE`。
+
+<p align="center"><sub>Apache-2.0 · 社区插件，与 DeepSeek 无关。</sub></p>
