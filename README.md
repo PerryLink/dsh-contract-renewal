@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-flow-dark.svg">
-  <img src="docs/assets/dsh-contract-renewal-flow-light.svg" width="100%" alt="dsh-contract-renewal 管线：contracts.csv → contract.ingest 校验并追加到 contracts.jsonl（R1）→ contract.upcoming 按 as_of 分三组并给出 days_left（R0）→ contract.report 导出带 sha256 的 CSV（R1），文件落在 $DSH_HOME/storages/dsh-contract-renewal/exports/；全程本地，不读合同正文">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-hero-zh-dark.webp">
+  <img src="docs/assets/dsh-contract-renewal-hero-zh-light.webp" width="100%" alt="dsh-contract-renewal 横幅：五份 quickstart 合同各画一条续签窗口条（宽度 = 该合同的 renewal_window_days），竖线是 as_of 2026-12-01 —— DEMO-MSA-2026-001 已过期 16 天（窗口 60 天），DEMO-NDA-2026-002 到期当天、落在窗口内，DEMO-SAAS-2026-003 剩 19 天（窗口 60 天）在窗口内，DEMO-LEASE-2026-004 剩 45 天但 30 天窗口已过、归入 N 天内，DEMO-SUPPORT-2026-005 剩 120 天只进 counts.later；合计 1 / 2 / 1 / 1，数据取自 samples/quickstart/expected/result.json">
 </picture>
 
 # dsh-contract-renewal
@@ -42,6 +42,11 @@ dsh plugin --profile <profile> add dsh-contract-renewal
 
 - **适合**：法务/采购/行政手里有一批合同，需要按统一口径看「哪些已经过期、哪些该续签了」；要把登记表和到期清单交给同事复核；要把本地台账导出 CSV 再做透视或入库。
 - **不适合**：解析合同 PDF/Word 正文、抽取条款（请用 `dsh-legal-clause`）；收邮件、去重、分派（请用 `dsh-legal-intake`）；自动发续签邮件或调用 OA/CLM；需要多租户、审批流、权限分级的生产合同系统；替代律师判断某份合同能不能续。
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-flow-v5-dark.svg">
+  <img src="docs/assets/dsh-contract-renewal-flow-v5-light.svg" width="100%" alt="dsh-contract-renewal 结构：写侧 contract.ingest 校验 contracts.csv 的 7 个字段（严格 ISO 日期、编号不分大小写唯一、窗口 0–3650、金额最多两位小数）后追加进 $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl（R1，append-only）；读侧算 days_left = end_date − as_of（UTC 日号）后按四步互斥判定分档：days_left < 0 → expired，0 ≤ days_left ≤ w（renewal_window_days）→ in_renewal_window，w < days_left ≤ N（within_days 默认 90）→ expiring_soon，> N → 只进 counts.later；两个出口：contract.upcoming 返回三组加 counts（R0），contract.report 把全部 5 行写成 CSV 并返回 sha256 / rows / bytes 到 exports/（R1）">
+</picture>
 
 ## 三步上手
 
@@ -306,7 +311,7 @@ node --test test/*.test.mjs
 node scripts/gate.mjs
 ```
 
-配图由 [`scripts/gen-readme-assets.py`](scripts/gen-readme-assets.py) 程序化生成（Python 标准库、纯 SVG 流程图、图内只用命令 token、深浅双版），可重复执行；`docs/assets/quickstart.png` 为真实运行截图，配合 `docs/assets/quickstart.log` 一并保留。
+配图由 [`scripts/gen-readme-assets.py`](scripts/gen-readme-assets.py) 程序化生成：hero 用 Pillow 把五份样例合同画成续签窗口泳道，结构图是手写 SVG 的四档判定阶梯；数字直接读自 quickstart 金标 `samples/quickstart/expected/result.json`，深浅双版，可重复执行；`docs/assets/quickstart.png` 为真实运行截图，配合 `docs/assets/quickstart.log` 一并保留。
 
 Topics：`dsh`, `dsh-plugin`, `deepseek-harness`, `deepseek`, `contract`, `renewal`, `expiry`, `legal`, `csv`, `perrylink`
 

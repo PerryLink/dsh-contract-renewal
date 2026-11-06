@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-flow-dark.svg">
-  <img src="docs/assets/dsh-contract-renewal-flow-light.svg" width="100%" alt="Pipeline de dsh-contract-renewal: contracts.csv → contract.ingest valida y añade a contracts.jsonl (R1) → contract.upcoming agrupa por as_of y devuelve days_left (R0) → contract.report exporta un CSV con sha256 (R1) en $DSH_HOME/storages/dsh-contract-renewal/exports/; todo local, nunca se lee el cuerpo del contrato">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-hero-en-dark.webp">
+  <img src="docs/assets/dsh-contract-renewal-hero-en-light.webp" width="100%" alt="Banner de dsh-contract-renewal: una barra de ventana de renovación por contrato del quickstart (ancho = renewal_window_days de ese contrato) sobre un eje de days_left, con as_of 2026-12-01 como línea vertical — DEMO-MSA-2026-001 venció hace 16 días (ventana de 60), DEMO-NDA-2026-002 vence hoy y está en su ventana, DEMO-SAAS-2026-003 19 días restantes de una ventana de 60, DEMO-LEASE-2026-004 45 días restantes pero su ventana de 30 ya pasó, así que cae en «N días», DEMO-SUPPORT-2026-005 a 120 días y solo se cuenta (later); recuento 1 / 2 / 1 / 1 tomado de samples/quickstart/expected/result.json">
 </picture>
 
 # dsh-contract-renewal
@@ -42,6 +42,11 @@ En una frase: guarda en local un registro de metadatos de contratos (número, co
 
 - **Encaja**: un equipo legal, de compras o de administración con un lote de contratos que necesita una visión coherente de «qué ya venció y qué hay que renovar»; una lista de vencimientos que pasar a un revisor; un CSV local para analizar o cargar en otro sistema.
 - **No encaja**: analizar PDF/Word de contratos (usa `dsh-legal-clause`); recibir y deduplicar correo (usa `dsh-legal-intake`); enviar automáticamente correos de renovación o llamar a un OA/CLM; un sistema de contratos multiinquilino con aprobaciones y permisos por rol; decidir si un contrato debe renovarse.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-flow-v5-dark.svg">
+  <img src="docs/assets/dsh-contract-renewal-flow-v5-light.svg" width="100%" alt="Estructura de dsh-contract-renewal: el lado de escritura (contract.ingest) valida los 7 campos de contracts.csv — fechas ISO estrictas, número único sin distinguir mayúsculas, ventana 0–3650, importe con dos decimales como máximo — y los añade a $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl (R1, append-only); el lado de lectura calcula days_left = end_date − as_of en días UTC y aplica cuatro pruebas excluyentes en orden: days_left < 0 → expired, 0 ≤ days_left ≤ w (renewal_window_days) → in_renewal_window, w < days_left ≤ N (within_days, 90 por defecto) → expiring_soon, > N → solo counts.later; dos salidas: contract.upcoming devuelve los tres grupos más counts (R0) y contract.report escribe las 5 filas en CSV con sha256 / rows / bytes en exports/ (R1)">
+</picture>
 
 ## Instalación en tres pasos
 
@@ -306,7 +311,7 @@ node --test test/*.test.mjs
 node scripts/gate.mjs
 ```
 
-Las imágenes del README las genera [`scripts/gen-readme-assets.py`](scripts/gen-readme-assets.py) (biblioteca estándar de Python, diagrama de flujo SVG puro, solo tokens de comandos, variantes clara y oscura) y se puede volver a ejecutar cuando haga falta; `docs/assets/quickstart.png` es una ejecución real capturada y se conserva junto con `docs/assets/quickstart.log`.
+Las imágenes del README las genera [`scripts/gen-readme-assets.py`](scripts/gen-readme-assets.py): el hero dibuja los cinco contratos de ejemplo como carriles de ventana de renovación con Pillow, la figura de estructura es SVG escrito a mano con la escalera de cuatro grupos, y cada número se lee del golden del quickstart `samples/quickstart/expected/result.json`; las variantes clara y oscura se pueden regenerar cuando haga falta. `docs/assets/quickstart.png` es una ejecución real capturada y se conserva junto con `docs/assets/quickstart.log`.
 
 Topics: `dsh`, `dsh-plugin`, `deepseek-harness`, `deepseek`, `contract`, `renewal`, `expiry`, `legal`, `csv`, `perrylink`
 

@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-flow-dark.svg">
-  <img src="docs/assets/dsh-contract-renewal-flow-light.svg" width="100%" alt="Pipeline do dsh-contract-renewal: contracts.csv → contract.ingest valida e acrescenta a contracts.jsonl (R1) → contract.upcoming agrupa por as_of e devolve days_left (R0) → contract.report exporta um CSV com sha256 (R1) em $DSH_HOME/storages/dsh-contract-renewal/exports/; tudo local, o corpo do contrato nunca é lido">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-hero-en-dark.webp">
+  <img src="docs/assets/dsh-contract-renewal-hero-en-light.webp" width="100%" alt="Banner do dsh-contract-renewal: uma barra de janela de renovação por contrato do quickstart (largura = renewal_window_days daquele contrato) sobre um eixo de days_left, com as_of 2026-12-01 como linha vertical — DEMO-MSA-2026-001 venceu há 16 dias (janela de 60), DEMO-NDA-2026-002 vence hoje e está na janela, DEMO-SAAS-2026-003 19 dias restantes numa janela de 60, DEMO-LEASE-2026-004 45 dias restantes mas a janela de 30 já passou, então entra em «N dias», DEMO-SUPPORT-2026-005 a 120 dias e apenas contado (later); contagem 1 / 2 / 1 / 1 de samples/quickstart/expected/result.json">
 </picture>
 
 # dsh-contract-renewal
@@ -42,6 +42,11 @@ Em uma frase: mantém um registro local de metadados de contratos (número, cont
 
 - **Serve**: um time jurídico, de compras ou administrativo com um lote de contratos que precisa de uma visão única de «o que já venceu e o que precisa ser renovado»; uma lista de vencimentos para entregar a um revisor; um CSV local para analisar ou carregar em outro sistema.
 - **Não serve**: analisar PDF/Word de contratos (use `dsh-legal-clause`); receber e deduplicar e-mail (use `dsh-legal-intake`); enviar automaticamente e-mails de renovação ou chamar um OA/CLM; um sistema de contratos multi-inquilino com aprovações e permissões por papel; decidir se um contrato deve ser renovado.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-flow-v5-dark.svg">
+  <img src="docs/assets/dsh-contract-renewal-flow-v5-light.svg" width="100%" alt="Estrutura do dsh-contract-renewal: o lado de escrita (contract.ingest) valida os 7 campos de contracts.csv — datas ISO estritas, número único sem diferenciar maiúsculas, janela 0–3650, valor com no máximo duas casas — e acrescenta a $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl (R1, append-only); o lado de leitura calcula days_left = end_date − as_of em dias UTC e aplica quatro testes exclusivos em ordem: days_left < 0 → expired, 0 ≤ days_left ≤ w (renewal_window_days) → in_renewal_window, w < days_left ≤ N (within_days, 90 por padrão) → expiring_soon, > N → apenas counts.later; duas saídas: contract.upcoming devolve os três grupos mais counts (R0) e contract.report grava as 5 linhas em CSV com sha256 / rows / bytes em exports/ (R1)">
+</picture>
 
 ## Instalação em três passos
 
@@ -306,7 +311,7 @@ node --test test/*.test.mjs
 node scripts/gate.mjs
 ```
 
-As imagens do README são geradas por [`scripts/gen-readme-assets.py`](scripts/gen-readme-assets.py) (biblioteca padrão do Python, diagrama de fluxo SVG puro, apenas tokens de comando, versões clara e escura) e podem ser regeradas quando necessário; `docs/assets/quickstart.png` é uma execução real capturada e é mantida junto com `docs/assets/quickstart.log`.
+As imagens do README são geradas por [`scripts/gen-readme-assets.py`](scripts/gen-readme-assets.py): o hero desenha os cinco contratos de exemplo como faixas de janela de renovação com Pillow, a figura de estrutura é SVG escrito à mão com a escada de quatro grupos, e cada número vem do golden do quickstart `samples/quickstart/expected/result.json`; as versões clara e escura podem ser regeradas quando necessário. `docs/assets/quickstart.png` é uma execução real capturada e é mantida junto com `docs/assets/quickstart.log`.
 
 Topics: `dsh`, `dsh-plugin`, `deepseek-harness`, `deepseek`, `contract`, `renewal`, `expiry`, `legal`, `csv`, `perrylink`
 

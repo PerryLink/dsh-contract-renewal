@@ -1,8 +1,8 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-flow-dark.svg">
-  <img src="docs/assets/dsh-contract-renewal-flow-light.svg" width="100%" alt="dsh-contract-renewal पाइपलाइन: contracts.csv → contract.ingest सत्यापन के बाद contracts.jsonl में जोड़ता है (R1) → contract.upcoming as_of से समूह बनाकर days_left देता है (R0) → contract.report sha256 के साथ CSV निर्यात करता है (R1), फ़ाइल $DSH_HOME/storages/dsh-contract-renewal/exports/ में; पूरी तरह लोकल, अनुबंध का मूल पाठ कभी नहीं पढ़ा जाता">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-hero-en-dark.webp">
+  <img src="docs/assets/dsh-contract-renewal-hero-en-light.webp" width="100%" alt="dsh-contract-renewal बैनर: quickstart के हर अनुबंध के लिए एक नवीनीकरण-विंडो पट्टी (चौड़ाई = उस अनुबंध का renewal_window_days), days_left अक्ष पर, बीच में as_of 2026-12-01 की खड़ी रेखा — DEMO-MSA-2026-001 16 दिन पहले समाप्त (60 दिन की विंडो), DEMO-NDA-2026-002 आज ही देय और विंडो के भीतर, DEMO-SAAS-2026-003 19 दिन शेष (60 दिन की विंडो), DEMO-LEASE-2026-004 45 दिन शेष पर 30 दिन की विंडो बीत चुकी इसलिए «N दिनों में», DEMO-SUPPORT-2026-005 120 दिन और केवल गिना जाता है (later); गणना 1 / 2 / 1 / 1, स्रोत samples/quickstart/expected/result.json">
 </picture>
 
 # dsh-contract-renewal
@@ -42,6 +42,11 @@ dsh plugin --profile <profile> add dsh-contract-renewal
 
 - **उपयुक्त**: कानूनी, खरीद या प्रशासनिक टीम के पास अनुबंधों का बैच हो और एक ही मापदंड पर देखना हो कि «कौन समाप्त हो चुके हैं और किनका नवीनीकरण करना है»; समीक्षक को देने के लिए रजिस्ट्री और देय सूची हो; विश्लेषण या किसी अन्य सिस्टम में लोड करने के लिए लोकल CSV चाहिए हो।
 - **उपयुक्त नहीं**: अनुबंध के PDF/Word पढ़ना (इसके लिए `dsh-legal-clause`); ईमेल प्राप्त करना और डुप्लिकेट हटाना (इसके लिए `dsh-legal-intake`); स्वचालित नवीनीकरण मेल भेजना या OA/CLM कॉल करना; अनुमोदन और भूमिका-आधारित अनुमतियों वाला बहु-किरायेदार अनुबंध सिस्टम; यह तय करना कि किसी अनुबंध का नवीनीकरण होना चाहिए या नहीं।
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-flow-v5-dark.svg">
+  <img src="docs/assets/dsh-contract-renewal-flow-v5-light.svg" width="100%" alt="dsh-contract-renewal संरचना: लेखन पक्ष (contract.ingest) contracts.csv के 7 फ़ील्ड जाँचता है — सख्त ISO तिथियाँ, केस-असंवेदी अद्वितीय संख्या, विंडो 0–3650, राशि अधिकतम दो दशमलव — और $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl में जोड़ता है (R1, append-only); पठन पक्ष days_left = end_date − as_of को UTC दिनों में निकालकर चार क्रमिक अनन्य परीक्षण लगाता है: days_left < 0 → expired, 0 ≤ days_left ≤ w (renewal_window_days) → in_renewal_window, w < days_left ≤ N (within_days, डिफ़ॉल्ट 90) → expiring_soon, > N → केवल counts.later; दो निर्गम: contract.upcoming तीन समूह और counts देता है (R0), contract.report सभी 5 पंक्तियाँ sha256 / rows / bytes के साथ exports/ में CSV लिखता है (R1)">
+</picture>
 
 ## तीन चरणों में शुरुआत
 
@@ -306,7 +311,7 @@ node --test test/*.test.mjs
 node scripts/gate.mjs
 ```
 
-README की छवियाँ [`scripts/gen-readme-assets.py`](scripts/gen-readme-assets.py) से बनती हैं (Python मानक लाइब्रेरी, शुद्ध SVG फ़्लो डायग्राम, केवल कमांड टोकन, हल्का और गहरा संस्करण) और कभी भी दोबारा चलाई जा सकती हैं; `docs/assets/quickstart.png` वास्तविक रन का कैप्चर है और `docs/assets/quickstart.log` के साथ रखा गया है।
+README की छवियाँ [`scripts/gen-readme-assets.py`](scripts/gen-readme-assets.py) से बनती हैं: बैनर में पाँच नमूना अनुबंध Pillow से नवीनीकरण-विंडो पट्टियों के रूप में बनते हैं, संरचना चित्र हाथ से लिखा SVG चार श्रेणियों की सीढ़ी है, और हर संख्या quickstart गोल्डन `samples/quickstart/expected/result.json` से पढ़ी जाती है; हल्का और गहरा दोनों संस्करण कभी भी दोबारा चलाए जा सकते हैं। `docs/assets/quickstart.png` वास्तविक रन का कैप्चर है और `docs/assets/quickstart.log` के साथ रखा गया है।
 
 Topics: `dsh`, `dsh-plugin`, `deepseek-harness`, `deepseek`, `contract`, `renewal`, `expiry`, `legal`, `csv`, `perrylink`
 
