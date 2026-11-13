@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1100" height="660" viewBox="0 0 1100 660" role="img" aria-labelledby="flowTitle flowDesc">
 <title id="flowTitle">dsh-contract-renewal structure: one append-only contracts.jsonl, a write side that validates and appends, and a read side that turns days_left into four exclusive buckets and two exits</title>
-<desc id="flowDesc">contracts.csv (7 fields) is validated by contract.ingest (R1) and appended to $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl. On the read side days_left = end_date - as_of is computed in UTC day numbers and classified by four ordered tests with w = renewal_window_days and N = within_days (90): days_left &lt; 0 gives expired, 0 &lt;= days_left &lt;= w gives in_renewal_window, w &lt; days_left &lt;= N gives expiring_soon, days_left &gt; N is later and only counted. contract.upcoming returns the three groups plus counts; contract.report writes every row to exports/contracts-&lt;as_of&gt;.csv with sha256, rows and bytes.</desc>
+<desc id="flowDesc">contracts.csv (7 fields) is validated by contract_ingest (R1) and appended to $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl. On the read side days_left = end_date - as_of is computed in UTC day numbers and classified by four ordered tests with w = renewal_window_days and N = within_days (90): days_left &lt; 0 gives expired, 0 &lt;= days_left &lt;= w gives in_renewal_window, w &lt; days_left &lt;= N gives expiring_soon, days_left &gt; N is later and only counted. contract_upcoming returns the three groups plus counts; contract_report writes every row to exports/contracts-&lt;as_of&gt;.csv with sha256, rows and bytes.</desc>
 <defs>
   <linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
     <stop offset="0" stop-color="#f9f6fd"/>
@@ -22,7 +22,7 @@
 <line x1="44" y1="102" x2="1056" y2="102" stroke="#e7e4f0" stroke-width="1.5"/>
 <rect x="44" y="116" width="370" height="346" rx="20" fill="#f4f1fb" stroke="#e4e1ee" stroke-width="1.5"/>
 <text x="64" y="144" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="12.5" font-weight="700" letter-spacing="1.2">WRITE SIDE · R1 LOCAL WRITE</text>
-<text x="64" y="172" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="19" font-weight="700">contract.ingest</text>
+<text x="64" y="172" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="19" font-weight="700">contract_ingest</text>
 <rect x="344" y="154" width="50" height="26" rx="13" fill="#ece7f9"/>
 <text x="369" y="171" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="12.5" text-anchor="middle">R1</text>
 <text x="64" y="198" fill="#4d5261" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif" font-size="13.5">contracts.csv · 7 fields</text>
@@ -50,7 +50,7 @@
 <text x="78" y="438" fill="#b4442c" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="11">E_CONTRACT_* → one sentence + next step</text>
 <rect x="434" y="116" width="622" height="346" rx="20" fill="#f4f1fb" stroke="#e4e1ee" stroke-width="1.5"/>
 <text x="454" y="144" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="12.5" font-weight="700" letter-spacing="1.2">READ SIDE · R0 READ / R1 EXPORT</text>
-<text x="454" y="172" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="17" font-weight="700">contract.upcoming · contract.report</text>
+<text x="454" y="172" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="17" font-weight="700">contract_upcoming · contract_report</text>
 <text x="1036" y="171" fill="#8f94a4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="12.5" text-anchor="end">R0 / R1</text>
 <g filter="url(#soft)"><rect x="454" y="188" width="582" height="52" rx="14" fill="#ffffff" stroke="#e4e1ee" stroke-width="1.5"/></g>
 <text x="471" y="210" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="13.5">days_left = end_date − as_of  ·  UTC day numbers, no TZ / DST</text>
@@ -79,7 +79,7 @@
 <path d="M776 315 L784 315" fill="none" stroke="#4B67B4" stroke-width="2" stroke-linecap="round"/><path d="M778 311.28L778 318.72L784 315 Z" fill="#4B67B4"/>
 <path d="M776 421 L784 421" fill="none" stroke="#4B67B4" stroke-width="2" stroke-linecap="round"/><path d="M778 417.28L778 424.72L784 421 Z" fill="#4B67B4"/>
 <g filter="url(#soft)"><rect x="786" y="252" width="250" height="126" rx="16" fill="#ffffff" stroke="#e4e1ee" stroke-width="1.5"/></g>
-<text x="802" y="276" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="13" font-weight="700">contract.upcoming · R0</text>
+<text x="802" y="276" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="13" font-weight="700">contract_upcoming · R0</text>
 <text x="802" y="294" fill="#8f94a4" font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', 'Microsoft YaHei', sans-serif" font-size="11.5">3 exclusive groups + counts</text>
 <text x="802" y="318" fill="#b4442c" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="13">expired[]</text>
 <text x="1036" y="318" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="13" text-anchor="end" font-weight="700">1</text>
@@ -90,7 +90,7 @@
 <text x="802" y="372" fill="#8f94a4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="13">counts.later</text>
 <text x="1036" y="372" fill="#141419" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="13" text-anchor="end" font-weight="700">1</text>
 <g filter="url(#soft)"><rect x="786" y="392" width="250" height="64" rx="16" fill="#ffffff" stroke="#e4e1ee" stroke-width="1.5"/></g>
-<text x="802" y="413" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="13" font-weight="700">contract.report · R1</text>
+<text x="802" y="413" fill="#4B67B4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="13" font-weight="700">contract_report · R1</text>
 <text x="802" y="431" fill="#4d5261" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="11">RFC 4180 CSV · sha256 · rows</text>
 <text x="802" y="448" fill="#8f94a4" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Courier New', monospace" font-size="11">exports/contracts-2026-12-01.csv</text>
 <g filter="url(#soft)"><rect x="44" y="480" width="1012" height="64" rx="20" fill="#ffffff" stroke="#e4e1ee" stroke-width="1.5"/></g>

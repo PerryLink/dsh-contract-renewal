@@ -33,9 +33,9 @@ async function setup(t) {
   return { dir, tools }
 }
 
-test('createTools exposes exactly the three documented contract.* tools', () => {
+test('createTools exposes exactly the three documented contract_* tools', () => {
   const tools = createTools({ baseDir: path.join(os.tmpdir(), 'dsh-contract-smoke') })
-  assert.deepEqual(tools.map((tool) => tool.name), ['contract.ingest', 'contract.upcoming', 'contract.report'])
+  assert.deepEqual(tools.map((tool) => tool.name), ['contract_ingest', 'contract_upcoming', 'contract_report'])
   assert.equal(new Set(tools.map((tool) => tool.name)).size, 3)
   for (const tool of tools) {
     assert.ok(tool.description.length > 0)
@@ -51,9 +51,9 @@ test('ingest + upcoming keep the renewal-window boundary at exactly N days', asy
     contract({ contract_no: 'DEMO-WINDOW-002', end_date: '2026-12-31', renewal_window_days: 30 }),
     contract({ contract_no: 'DEMO-SOON-003', end_date: '2027-01-01', renewal_window_days: 30 }),
   ]
-  for (const fixture of fixtures) await tools['contract.ingest'].execute(fixture, call)
+  for (const fixture of fixtures) await tools['contract_ingest'].execute(fixture, call)
 
-  const result = await tools['contract.upcoming'].execute({ as_of: '2026-12-01', within_days: 90 }, call)
+  const result = await tools['contract_upcoming'].execute({ as_of: '2026-12-01', within_days: 90 }, call)
   assert.equal(result.as_of, '2026-12-01')
   assert.equal(result.within_days, 90)
   assert.deepEqual(result.expired.map((item) => [item.contract_no, item.days_left]), [['DEMO-EXPIRED-001', -16]])
@@ -64,9 +64,9 @@ test('ingest + upcoming keep the renewal-window boundary at exactly N days', asy
 
 test('report writes an escaped CSV and matches sha256/byte counts', async (t) => {
   const { tools } = await setup(t)
-  await tools['contract.ingest'].execute(contract({ contract_no: 'DEMO-CSV-001', counterparty: '华东合成制造有限公司, 上海分公司' }), call)
-  await tools['contract.ingest'].execute(contract({ contract_no: 'DEMO-CSV-002', counterparty: 'Northwind "APAC" Ltd.' }), call)
-  const exported = await tools['contract.report'].execute({ as_of: '2026-12-01', within_days: 90 }, call)
+  await tools['contract_ingest'].execute(contract({ contract_no: 'DEMO-CSV-001', counterparty: '华东合成制造有限公司, 上海分公司' }), call)
+  await tools['contract_ingest'].execute(contract({ contract_no: 'DEMO-CSV-002', counterparty: 'Northwind "APAC" Ltd.' }), call)
+  const exported = await tools['contract_report'].execute({ as_of: '2026-12-01', within_days: 90 }, call)
   const text = await readFile(exported.path, 'utf8')
 
   assert.equal(exported.rows, 2)
@@ -81,7 +81,7 @@ test('report writes an escaped CSV and matches sha256/byte counts', async (t) =>
 
 test('report on an empty registry writes only the header', async (t) => {
   const { tools } = await setup(t)
-  const exported = await tools['contract.report'].execute({ as_of: '2026-12-01' }, call)
+  const exported = await tools['contract_report'].execute({ as_of: '2026-12-01' }, call)
   const text = await readFile(exported.path, 'utf8')
   assert.equal(exported.rows, 0)
   assert.equal(text, 'contract_no,counterparty,start_date,end_date,renewal_window_days,owner,amount,days_left,status\n')
@@ -90,15 +90,15 @@ test('report on an empty registry writes only the header', async (t) => {
 test('invalid as_of and within_days are rejected with stable codes', async (t) => {
   const { tools } = await setup(t)
   await assert.rejects(
-    () => tools['contract.upcoming'].execute({ as_of: '2026-02-30' }, call),
+    () => tools['contract_upcoming'].execute({ as_of: '2026-02-30' }, call),
     (error) => error.code === 'E_CONTRACT_DATE_INVALID',
   )
   await assert.rejects(
-    () => tools['contract.report'].execute({ as_of: '2026-13-01' }, call),
+    () => tools['contract_report'].execute({ as_of: '2026-13-01' }, call),
     (error) => error.code === 'E_CONTRACT_DATE_INVALID',
   )
   await assert.rejects(
-    () => tools['contract.upcoming'].execute({ as_of: '2026-12-01', within_days: -1 }, call),
+    () => tools['contract_upcoming'].execute({ as_of: '2026-12-01', within_days: -1 }, call),
     (error) => error.code === 'E_CONTRACT_WINDOW_INVALID',
   )
 })
@@ -107,7 +107,7 @@ test('report filenames cannot traverse out of the exports directory', async (t) 
   const { dir, tools } = await setup(t)
   for (const filename of ['../evil.csv', '..\\evil.csv', '/tmp/evil.csv', 'sub/evil.csv', 'a'.repeat(121)]) {
     await assert.rejects(
-      () => tools['contract.report'].execute({ as_of: '2026-12-01', filename }, call),
+      () => tools['contract_report'].execute({ as_of: '2026-12-01', filename }, call),
       (error) => error.code === 'E_CONTRACT_PATH_INVALID',
       filename,
     )
@@ -130,9 +130,9 @@ const tools = Object.fromEntries(createTools({
   baseDir: process.env.TMP_BASE,
   now: () => new Date('2026-12-01T23:30:00Z'),
 }).map((tool) => [tool.name, tool]))
-for (const item of JSON.parse(process.env.CONTRACTS)) await tools['contract.ingest'].execute(item, { callId: 'tz' })
-const upcoming = await tools['contract.upcoming'].execute({ within_days: 90 }, { callId: 'tz' })
-const report = await tools['contract.report'].execute({}, { callId: 'tz' })
+for (const item of JSON.parse(process.env.CONTRACTS)) await tools['contract_ingest'].execute(item, { callId: 'tz' })
+const upcoming = await tools['contract_upcoming'].execute({ within_days: 90 }, { callId: 'tz' })
+const report = await tools['contract_report'].execute({}, { callId: 'tz' })
 const csv = await readFile(report.path, 'utf8')
 const groups = [...upcoming.expired, ...upcoming.in_renewal_window, ...upcoming.expiring_soon].map((item) => [item.contract_no, item.days_left, item.status])
 console.log(JSON.stringify({ as_of: upcoming.as_of, report_as_of: report.as_of, counts: upcoming.counts, groups, csv }))

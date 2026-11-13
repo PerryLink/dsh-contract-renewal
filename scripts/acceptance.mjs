@@ -56,21 +56,21 @@ async function main() {
       contract({ contract_no: 'ACC-SOON-004', end_date: '2027-01-01', renewal_window_days: 30 }),
       contract({ contract_no: 'ACC-LATER-005', end_date: '2027-03-31', renewal_window_days: 90, counterparty: 'Northwind "APAC" Ltd.' }),
     ]
-    for (const fixture of fixtures) await tools['contract.ingest'].execute(fixture, exec)
+    for (const fixture of fixtures) await tools['contract_ingest'].execute(fixture, exec)
     const stored = await new FileContractStore(baseDir).load()
-    const duplicateCode = await errorCode(tools['contract.ingest'].execute(fixtures[0], exec))
+    const duplicateCode = await errorCode(tools['contract_ingest'].execute(fixtures[0], exec))
 
-    const upcoming = await tools['contract.upcoming'].execute({ as_of: '2026-12-01', within_days: 90 }, exec)
-    const exported = await tools['contract.report'].execute({ as_of: '2026-12-01', within_days: 90 }, exec)
+    const upcoming = await tools['contract_upcoming'].execute({ as_of: '2026-12-01', within_days: 90 }, exec)
+    const exported = await tools['contract_report'].execute({ as_of: '2026-12-01', within_days: 90 }, exec)
     const csvText = readFileSync(exported.path, 'utf8')
 
     const emptyTools = Object.fromEntries(createTools({ baseDir: emptyDir }).map((tool) => [tool.name, tool]))
-    const emptyUpcoming = await emptyTools['contract.upcoming'].execute({ as_of: '2026-12-01' }, exec)
-    const emptyReport = await emptyTools['contract.report'].execute({ as_of: '2026-12-01' }, exec)
+    const emptyUpcoming = await emptyTools['contract_upcoming'].execute({ as_of: '2026-12-01' }, exec)
+    const emptyReport = await emptyTools['contract_report'].execute({ as_of: '2026-12-01' }, exec)
     const emptyText = readFileSync(emptyReport.path, 'utf8')
 
-    const dateCode = await errorCode(tools['contract.upcoming'].execute({ as_of: '2026-02-30' }, exec))
-    const pathCode = await errorCode(tools['contract.report'].execute({ as_of: '2026-12-01', filename: '../evil.csv' }, exec))
+    const dateCode = await errorCode(tools['contract_upcoming'].execute({ as_of: '2026-02-30' }, exec))
+    const pathCode = await errorCode(tools['contract_report'].execute({ as_of: '2026-12-01', filename: '../evil.csv' }, exec))
     const quoted = csvText.includes('"Acme, Inc."') && csvText.includes('"Northwind ""APAC"" Ltd."')
     const hashOk = exported.sha256 === sha256(csvText) && exported.bytes === Buffer.byteLength(csvText, 'utf8')
     const boundaryText = upcoming.expired.map((item) => item.days_left).join('/')

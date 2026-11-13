@@ -1,6 +1,6 @@
 {
   "name": "dsh-contract-renewal",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Register contracts, list expired / renewal-window / soon-due exposure by a given date, and export CSV; local files only.",
   "type": "module",
   "main": "./lib/plugin/index.js",
@@ -23,6 +23,7 @@
     "samples",
     "docs/assets",
     "screenshots.json",
+    "CHANGELOG.md",
     "LICENSE",
     "NOTICE"
   ],

@@ -65,7 +65,7 @@ walk('src')
 const source = srcFiles.map(read).join('\n')
 check(/\bE_CONTRACT_/.test(source), 'src must define stable E_CONTRACT_* error codes')
 check(!/(^|[^\w.])(fetch\s*\(|axios|http\.request|https\.request|new WebSocket|undici)/.test(source), 'src must not contain network calls')
-for (const name of ['contract.ingest', 'contract.upcoming', 'contract.report']) {
+for (const name of ['contract_ingest', 'contract_upcoming', 'contract_report']) {
   check(source.includes(`'${name}'`), `src must define the ${name} tool`)
 }
 

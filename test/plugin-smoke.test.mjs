@@ -34,7 +34,7 @@ test('apply() registers the three tools and writes below the documented root', a
   assert.deepEqual(plugin.inject, ['tools'])
   assert.equal(registered.length, 3)
 
-  const ingest = registered.find((tool) => tool.name === 'contract.ingest')
+  const ingest = registered.find((tool) => tool.name === 'contract_ingest')
   await ingest.execute(
     {
       contract_no: 'DEMO-APPLY-001',

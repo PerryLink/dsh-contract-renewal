@@ -52,17 +52,17 @@ async function run() {
     const tools = Object.fromEntries(createTools({ baseDir: tempDir }).map((tool) => [tool.name, tool]))
     const exec = { callId: 'quickstart' }
 
-    for (const contract of contracts) await tools['contract.ingest'].execute(contract, exec)
+    for (const contract of contracts) await tools['contract_ingest'].execute(contract, exec)
 
     let duplicate = null
     try {
-      await tools['contract.ingest'].execute(contracts[0], exec)
+      await tools['contract_ingest'].execute(contracts[0], exec)
     } catch (error) {
       duplicate = error?.code ?? 'UNKNOWN'
     }
 
-    const upcoming = await tools['contract.upcoming'].execute({ as_of: AS_OF, within_days: WITHIN_DAYS }, exec)
-    const exported = await tools['contract.report'].execute({ as_of: AS_OF, within_days: WITHIN_DAYS }, exec)
+    const upcoming = await tools['contract_upcoming'].execute({ as_of: AS_OF, within_days: WITHIN_DAYS }, exec)
+    const exported = await tools['contract_report'].execute({ as_of: AS_OF, within_days: WITHIN_DAYS }, exec)
     const csvText = await readFile(exported.path, 'utf8')
 
     return {
