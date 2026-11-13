@@ -45,7 +45,7 @@ dsh plugin --profile <profile> add dsh-contract-renewal
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-flow-v5-dark.svg">
-  <img src="docs/assets/dsh-contract-renewal-flow-v5-light.svg" width="100%" alt="dsh-contract-renewal 结构：写侧 contract.ingest 校验 contracts.csv 的 7 个字段（严格 ISO 日期、编号不分大小写唯一、窗口 0–3650、金额最多两位小数）后追加进 $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl（R1，append-only）；读侧算 days_left = end_date − as_of（UTC 日号）后按四步互斥判定分档：days_left < 0 → expired，0 ≤ days_left ≤ w（renewal_window_days）→ in_renewal_window，w < days_left ≤ N（within_days 默认 90）→ expiring_soon，> N → 只进 counts.later；两个出口：contract.upcoming 返回三组加 counts（R0），contract.report 把全部 5 行写成 CSV 并返回 sha256 / rows / bytes 到 exports/（R1）">
+  <img src="docs/assets/dsh-contract-renewal-flow-v5-light.svg" width="100%" alt="dsh-contract-renewal 结构：写侧 contract_ingest 校验 contracts.csv 的 7 个字段（严格 ISO 日期、编号不分大小写唯一、窗口 0–3650、金额最多两位小数）后追加进 $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl（R1，append-only）；读侧算 days_left = end_date − as_of（UTC 日号）后按四步互斥判定分档：days_left < 0 → expired，0 ≤ days_left ≤ w（renewal_window_days）→ in_renewal_window，w < days_left ≤ N（within_days 默认 90）→ expiring_soon，> N → 只进 counts.later；两个出口：contract_upcoming 返回三组加 counts（R0），contract_report 把全部 5 行写成 CSV 并返回 sha256 / rows / bytes 到 exports/（R1）">
 </picture>
 
 ## 三步上手
@@ -80,13 +80,13 @@ dsh plugin --profile <profile> add dsh-contract-renewal
 
 ## 核心能力
 
-工具名是稳定 API；工具说明保留英文以匹配运行时输出。
+工具名是稳定 API；工具说明保留英文以匹配运行时输出。工具名只含 ASCII 字母、数字与下划线，匹配 provider 对 `tools[].name` 的 `^[a-zA-Z0-9_-]+$` 校验。
 
 | 工具 | 用途 | 风险 |
 |---|---|---|
-| `contract.ingest` | 登记一份合同，写 `contracts.jsonl`；非法日期 / 重复编号有稳定错误码 | R1 local write |
-| `contract.upcoming` | 按 `as_of` 分组并返回 `days_left`；默认今天（UTC）、90 天 | R0 |
-| `contract.report` | 导出带引号转义的 CSV，返回路径、sha256、行数、字节数 | R1 local write |
+| `contract_ingest` | 登记一份合同，写 `contracts.jsonl`；非法日期 / 重复编号有稳定错误码 | R1 local write |
+| `contract_upcoming` | 按 `as_of` 分组并返回 `days_left`；默认今天（UTC）、90 天 | R0 |
+| `contract_report` | 导出带引号转义的 CSV，返回路径、sha256、行数、字节数 | R1 local write |
 
 - **三组互斥，一份合同只出现一次** —— `expired`（已过期）、`in_renewal_window`（已进续签窗口）、`expiring_soon`（N 天内到期但还没进窗口）；其余只进 `counts.later`，不会重复计数。
 - **追加式本地登记表** —— 一行一份合同，落在 `$DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl`；原合同文件不读、不改，续签用新编号保留历史。
@@ -103,7 +103,7 @@ dsh plugin --profile <profile> add dsh-contract-renewal
 
 ## 输入
 
-- 一个合同登记表（CSV）或逐条调用 `contract.ingest`；每行 7 个字段：
+- 一个合同登记表（CSV）或逐条调用 `contract_ingest`；每行 7 个字段：
   `contract_no`（唯一编号）、`counterparty`（对方名称）、`start_date`、`end_date`（严格 `YYYY-MM-DD`）、`renewal_window_days`（0–3650 的整数）、`owner`（负责人）、`amount`（非负数字，最多两位小数）。
 - 日期必须是真实存在的 ISO 日期；`2026-02-30`、`2026-13-01`、`2026/12/01` 都会报 `E_CONTRACT_DATE_INVALID`。
 - 合同编号在同一登记表内**不区分大小写**唯一；重复登记报 `E_CONTRACT_DUPLICATE`。
@@ -111,9 +111,9 @@ dsh plugin --profile <profile> add dsh-contract-renewal
 
 ## 输出
 
-- `contract.ingest`：`{ contract_no, counterparty, start_date, end_date, renewal_window_days, owner, amount, total }`，`total` 是登记表当前条数。
-- `contract.upcoming`：`{ as_of, within_days, expired, in_renewal_window, expiring_soon, counts }`；每条含 `days_left`（负数=已过期）和 `status`。
-- `contract.report`：CSV 文件路径、文件名、`sha256`、行数、字节数与 `as_of`；文件写到 `$DSH_HOME/storages/dsh-contract-renewal/exports/`。
+- `contract_ingest`：`{ contract_no, counterparty, start_date, end_date, renewal_window_days, owner, amount, total }`，`total` 是登记表当前条数。
+- `contract_upcoming`：`{ as_of, within_days, expired, in_renewal_window, expiring_soon, counts }`；每条含 `days_left`（负数=已过期）和 `status`。
+- `contract_report`：CSV 文件路径、文件名、`sha256`、行数、字节数与 `as_of`；文件写到 `$DSH_HOME/storages/dsh-contract-renewal/exports/`。
 
 三组**互斥**，每份合同在一个 `as_of` 下只出现一次：
 
@@ -136,15 +136,15 @@ dsh plugin --profile <profile> add dsh-contract-renewal
 
 ```sh
 # 1) 登记一份合同
-#    工具面：contract.ingest({ contract_no: "DEMO-MSA-2026-001", counterparty: "…",
+#    工具面：contract_ingest({ contract_no: "DEMO-MSA-2026-001", counterparty: "…",
 #             start_date: "2026-01-01", end_date: "2026-11-15",
 #             renewal_window_days: 60, owner: "王敏", amount: 128000 })
 
 # 2) 看某一天的三组
-#    工具面：contract.upcoming({ as_of: "2026-12-01", within_days: 90 })
+#    工具面：contract_upcoming({ as_of: "2026-12-01", within_days: 90 })
 
 # 3) 导出 CSV
-#    工具面：contract.report({ as_of: "2026-12-01", filename: "contracts-2026-12-01.csv" })
+#    工具面：contract_report({ as_of: "2026-12-01", filename: "contracts-2026-12-01.csv" })
 ```
 
 用自带样例复跑并核对金标：
@@ -175,12 +175,12 @@ later:   DEMO-SUPPORT-2026-005 2027-03-31 (120 days) — 只在 counts.later
 
 | 工具 | 参数 | 必填 | 默认 | 含义 |
 |---|---|---|---|---|
-| `contract.ingest` | 7 个合同字段 | 是 | — | 编号、对方、起止日、续签窗口、负责人、金额 |
-| `contract.upcoming` | `as_of` | 否 | 今天（UTC） | 分组基准日，`YYYY-MM-DD`；显式传入可复现「今天」 |
-| `contract.upcoming` | `within_days` | 否 | `90` | 「N 天内到期」的 N，0–3650 的整数 |
-| `contract.report` | `as_of` | 否 | 今天（UTC） | 导出时的分组基准日 |
-| `contract.report` | `within_days` | 否 | `90` | 导出时用的 N |
-| `contract.report` | `filename` | 否 | `contracts-<as_of>.csv` | 只允许 `[A-Za-z0-9._-]`，不接受路径 |
+| `contract_ingest` | 7 个合同字段 | 是 | — | 编号、对方、起止日、续签窗口、负责人、金额 |
+| `contract_upcoming` | `as_of` | 否 | 今天（UTC） | 分组基准日，`YYYY-MM-DD`；显式传入可复现「今天」 |
+| `contract_upcoming` | `within_days` | 否 | `90` | 「N 天内到期」的 N，0–3650 的整数 |
+| `contract_report` | `as_of` | 否 | 今天（UTC） | 导出时的分组基准日 |
+| `contract_report` | `within_days` | 否 | `90` | 导出时用的 N |
+| `contract_report` | `filename` | 否 | `contracts-<as_of>.csv` | 只允许 `[A-Za-z0-9._-]`，不接受路径 |
 
 profile patch 示例（没有 config 段，只有身份行）：
 
@@ -236,7 +236,7 @@ profile patch 示例（没有 config 段，只有身份行）：
 联网：否。  
 外部系统：无。
 
-`contract.upcoming` 标 **R0**（只读）；`contract.ingest` 与 `contract.report` 标 **R1**（本地写，只写上面的目录）。可用 `DSH_CONTRACT_HOME` 覆盖本地写根目录（测试用），默认严格等于 `$DSH_HOME/storages/dsh-contract-renewal`。
+`contract_upcoming` 标 **R0**（只读）；`contract_ingest` 与 `contract_report` 标 **R1**（本地写，只写上面的目录）。可用 `DSH_CONTRACT_HOME` 覆盖本地写根目录（测试用），默认严格等于 `$DSH_HOME/storages/dsh-contract-renewal`。
 
 ## 错误码
 
@@ -287,7 +287,7 @@ profile patch 示例（没有 config 段，只有身份行）：
 | 平台 | 全平台；仅本地文件 |
 | 数据 | 不联网、不调用模型、不上传 |
 
-当前版本 `0.1.0`，23 项测试通过（`node --test test/*.test.mjs`）。
+当前版本 `0.2.0`，24 项测试通过（`node --test test/*.test.mjs`）。
 
 ## 生态与质量
 

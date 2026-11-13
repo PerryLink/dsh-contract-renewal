@@ -1,0 +1,73 @@
+{
+  "run_id": "contract-renewal-1794569766722",
+  "scope": "CONTRACT-RENEWAL-S1",
+  "status": "pass",
+  "counted": false,
+  "note": "synthetic contracts only; no customer data, no network",
+  "metrics": [
+    {
+      "req_id": "CR-A01",
+      "metric": "registry rows",
+      "threshold": "5",
+      "actual": "5",
+      "pass": true
+    },
+    {
+      "req_id": "CR-A02",
+      "metric": "duplicate guard",
+      "threshold": "E_CONTRACT_DUPLICATE",
+      "actual": "E_CONTRACT_DUPLICATE",
+      "pass": true
+    },
+    {
+      "req_id": "CR-A03",
+      "metric": "upcoming groups",
+      "threshold": "1 expired / 2 window / 1 soon / 1 later",
+      "actual": "1/2/1/1",
+      "pass": true
+    },
+    {
+      "req_id": "CR-A04",
+      "metric": "window boundary days_left",
+      "threshold": "-16|0/30",
+      "actual": "-16|0/30",
+      "pass": true
+    },
+    {
+      "req_id": "CR-A05",
+      "metric": "empty registry",
+      "threshold": "total=0 + header only",
+      "actual": "total=0 rows=0",
+      "pass": true
+    },
+    {
+      "req_id": "CR-A06",
+      "metric": "invalid ISO date",
+      "threshold": "E_CONTRACT_DATE_INVALID",
+      "actual": "E_CONTRACT_DATE_INVALID",
+      "pass": true
+    },
+    {
+      "req_id": "CR-A07",
+      "metric": "CSV quoting",
+      "threshold": "comma+quote escaped",
+      "actual": "escaped",
+      "pass": true
+    },
+    {
+      "req_id": "CR-A08",
+      "metric": "CSV sha256",
+      "threshold": "matches file",
+      "actual": "1e1899d003f7",
+      "pass": true
+    },
+    {
+      "req_id": "CR-A09",
+      "metric": "export path safety",
+      "threshold": "traversal rejected",
+      "actual": "E_CONTRACT_PATH_INVALID",
+      "pass": true
+    }
+  ],
+  "pass": true
+}

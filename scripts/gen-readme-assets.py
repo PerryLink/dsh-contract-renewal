@@ -16,10 +16,10 @@ hero 1440x576 (Pillow; zh/en x light/dark, 4 files)
 
 flow 1100x660 (hand-written SVG; light/dark, 2 files)
     Two sides of one append-only ledger, not a row of boxes:
-      WRITE SIDE  contracts.csv / contract.ingest -> validate() -> append
+      WRITE SIDE  contracts.csv / contract_ingest -> validate() -> append
       READ SIDE   days_left = end_date - as_of -> four exclusive buckets,
                   drawn as a descending four-rung ladder, -> two exits
-                  (contract.upcoming's three groups, contract.report's CSV)
+                  (contract_upcoming's three groups, contract_report's CSV)
     contracts.jsonl is the full-width band both sides meet at. Text is
     token-only English (tool names, field names, paths, numbers), so all
     five README languages share the same pair.
@@ -460,7 +460,7 @@ def flow_svg(skin_name: str) -> str:
     g = s["grid"]
     p: list[str] = [f'''<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="660" viewBox="0 0 1100 660" role="img" aria-labelledby="flowTitle flowDesc">
 <title id="flowTitle">dsh-contract-renewal structure: one append-only contracts.jsonl, a write side that validates and appends, and a read side that turns days_left into four exclusive buckets and two exits</title>
-<desc id="flowDesc">contracts.csv (7 fields) is validated by contract.ingest (R1) and appended to $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl. On the read side days_left = end_date - as_of is computed in UTC day numbers and classified by four ordered tests with w = renewal_window_days and N = within_days (90): days_left &lt; 0 gives expired, 0 &lt;= days_left &lt;= w gives in_renewal_window, w &lt; days_left &lt;= N gives expiring_soon, days_left &gt; N is later and only counted. contract.upcoming returns the three groups plus counts; contract.report writes every row to exports/contracts-&lt;as_of&gt;.csv with sha256, rows and bytes.</desc>
+<desc id="flowDesc">contracts.csv (7 fields) is validated by contract_ingest (R1) and appended to $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl. On the read side days_left = end_date - as_of is computed in UTC day numbers and classified by four ordered tests with w = renewal_window_days and N = within_days (90): days_left &lt; 0 gives expired, 0 &lt;= days_left &lt;= w gives in_renewal_window, w &lt; days_left &lt;= N gives expiring_soon, days_left &gt; N is later and only counted. contract_upcoming returns the three groups plus counts; contract_report writes every row to exports/contracts-&lt;as_of&gt;.csv with sha256, rows and bytes.</desc>
 <defs>
   <linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
     <stop offset="0" stop-color="{s['bg_from']}"/>
@@ -492,7 +492,7 @@ def flow_svg(skin_name: str) -> str:
     p.append(rect(*LPANEL, s["zone"], r=20, stroke=s["edge"]))
     p.append(svg_text(64, 144, "WRITE SIDE · R1 LOCAL WRITE", 12.5, "mono",
                       s["accent"], weight=700, ls=1.2, budget=330, tag="w-eyebrow"))
-    p.append(svg_text(64, 172, "contract.ingest", 19, "mono", s["text"],
+    p.append(svg_text(64, 172, "contract_ingest", 19, "mono", s["text"],
                       weight=700, budget=260, tag="w-title"))
     p.append(rect(344, 154, 394, 180, s["pill"], r=13))
     p.append(svg_text(369, 171, "R1", 12.5, "mono", s["accent"], anchor="middle",
@@ -527,7 +527,7 @@ def flow_svg(skin_name: str) -> str:
     p.append(rect(*RPANEL, s["zone"], r=20, stroke=s["edge"]))
     p.append(svg_text(454, 144, "READ SIDE · R0 READ / R1 EXPORT", 12.5, "mono",
                       s["accent"], weight=700, ls=1.2, budget=420, tag="r-eyebrow"))
-    p.append(svg_text(454, 172, "contract.upcoming · contract.report", 17, "mono",
+    p.append(svg_text(454, 172, "contract_upcoming · contract_report", 17, "mono",
                       s["text"], weight=700, budget=420, tag="r-title"))
     p.append(svg_text(1036, 171, "R0 / R1", 12.5, "mono", s["faint"],
                       anchor="end", budget=70, tag="r-r0"))
@@ -579,7 +579,7 @@ def flow_svg(skin_name: str) -> str:
     # ---- two exits
     up, rep = OUT_CARDS
     p.append(rect(*up, s["card"], r=16, stroke=s["edge"], filt=True))
-    p.append(svg_text(802, 276, "contract.upcoming · R0", 13, "mono", s["accent"],
+    p.append(svg_text(802, 276, "contract_upcoming · R0", 13, "mono", s["accent"],
                       weight=700, budget=218, tag="out-up-title"))
     p.append(svg_text(802, 294, "3 exclusive groups + counts", 11.5, "sans",
                       s["faint"], budget=218, tag="out-up-sub"))
@@ -594,7 +594,7 @@ def flow_svg(skin_name: str) -> str:
                           anchor="end", weight=700, budget=24, tag=f"out-n{i}"))
 
     p.append(rect(*rep, s["card"], r=16, stroke=s["edge"], filt=True))
-    p.append(svg_text(802, 413, "contract.report · R1", 13, "mono", s["accent"],
+    p.append(svg_text(802, 413, "contract_report · R1", 13, "mono", s["accent"],
                       weight=700, budget=218, tag="out-rep-title"))
     p.append(svg_text(802, 431, "RFC 4180 CSV · sha256 · rows", 11, "mono",
                       s["sub"], budget=218, tag="out-rep-1"))

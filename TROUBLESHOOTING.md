@@ -13,7 +13,7 @@
 
 - **症状**：`这个合同编号已经登记过了（E_CONTRACT_DUPLICATE）｜下一步：先查登记表；要更新请换一个合同版本号`
 - **原因**：同一登记表里已经有这个编号；比较时不区分大小写，`DEMO-001` 与 `demo-001` 视为同一份。
-- **动作**：先跑 `contract.upcoming` 或看 `contracts.jsonl` 确认已有记录。续签/改签请用新编号（如 `-v2`）登记，保留历史；不要手工删除旧行来“修复”。
+- **动作**：先跑 `contract_upcoming` 或看 `contracts.jsonl` 确认已有记录。续签/改签请用新编号（如 `-v2`）登记，保留历史；不要手工删除旧行来“修复”。
 
 ## 3. 到期日早于起始日（E_CONTRACT_DATE_RANGE）
 
@@ -56,7 +56,7 @@
 
 ```sh
 node samples/quickstart/run.mjs --check   # 自带样例必须通过
-node --test test/*.test.mjs               # 23 项测试
+node --test test/*.test.mjs               # 24 项测试
 node scripts/gate.mjs                     # 元数据 + 验收门
 ```
 

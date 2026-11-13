@@ -45,7 +45,7 @@ One sentence: keep a local registry of contract metadata (number, counterparty, 
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-flow-v5-dark.svg">
-  <img src="docs/assets/dsh-contract-renewal-flow-v5-light.svg" width="100%" alt="dsh-contract-renewal structure: the write side (contract.ingest) validates the 7 fields of contracts.csv — strict ISO dates, case-insensitive unique numbers, window 0–3650, amount with at most two decimals — and appends to $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl (R1, append-only); the read side computes days_left = end_date − as_of in UTC day numbers and applies four ordered exclusive tests: days_left < 0 → expired, 0 ≤ days_left ≤ w (renewal_window_days) → in_renewal_window, w < days_left ≤ N (within_days, default 90) → expiring_soon, > N → counts.later only; two exits: contract.upcoming returns the three groups plus counts (R0), contract.report writes all 5 rows as CSV with sha256 / rows / bytes under exports/ (R1)">
+  <img src="docs/assets/dsh-contract-renewal-flow-v5-light.svg" width="100%" alt="dsh-contract-renewal structure: the write side (contract_ingest) validates the 7 fields of contracts.csv — strict ISO dates, case-insensitive unique numbers, window 0–3650, amount with at most two decimals — and appends to $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl (R1, append-only); the read side computes days_left = end_date − as_of in UTC day numbers and applies four ordered exclusive tests: days_left < 0 → expired, 0 ≤ days_left ≤ w (renewal_window_days) → in_renewal_window, w < days_left ≤ N (within_days, default 90) → expiring_soon, > N → counts.later only; two exits: contract_upcoming returns the three groups plus counts (R0), contract_report writes all 5 rows as CSV with sha256 / rows / bytes under exports/ (R1)">
 </picture>
 
 ## Three-step setup
@@ -80,13 +80,13 @@ One sentence: keep a local registry of contract metadata (number, counterparty, 
 
 ## Core capabilities
 
-Tool names are a stable API; descriptions stay in English to match runtime output.
+Tool names are a stable API; descriptions stay in English to match runtime output. Names use only ASCII letters, digits and underscores, matching the provider's `^[a-zA-Z0-9_-]+$` check on `tools[].name`.
 
 | Tool | Purpose | Risk |
 |---|---|---|
-| `contract.ingest` | Register one contract into `contracts.jsonl`; stable codes for bad dates/duplicates | R1 local write |
-| `contract.upcoming` | Group by `as_of` with `days_left`; defaults to UTC today and 90 days | R0 |
-| `contract.report` | Export a quoted CSV and return path, sha256, rows and bytes | R1 local write |
+| `contract_ingest` | Register one contract into `contracts.jsonl`; stable codes for bad dates/duplicates | R1 local write |
+| `contract_upcoming` | Group by `as_of` with `days_left`; defaults to UTC today and 90 days | R0 |
+| `contract_report` | Export a quoted CSV and return path, sha256, rows and bytes | R1 local write |
 
 - **Three exclusive groups, one row per contract** — `expired`, `in_renewal_window`, and `expiring_soon` (due within N days but not yet in the window); everything else is counted only in `counts.later`, so nothing is double-counted.
 - **Append-only local registry** — one JSON object per line under `$DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl`; contract files are never read or modified, and a renewal is registered under a new number so history survives.
@@ -103,7 +103,7 @@ Tool names are a stable API; descriptions stay in English to match runtime outpu
 
 ## Input
 
-- One registry CSV or one `contract.ingest` call per contract. Each row has seven fields:
+- One registry CSV or one `contract_ingest` call per contract. Each row has seven fields:
   `contract_no` (unique), `counterparty`, `start_date`, `end_date` (strict `YYYY-MM-DD`), `renewal_window_days` (integer 0–3650), `owner`, `amount` (non-negative, at most two decimals).
 - Dates must be real ISO dates. `2026-02-30`, `2026-13-01` and `2026/12/01` all fail with `E_CONTRACT_DATE_INVALID`.
 - Contract numbers are unique case-insensitively inside one registry; a duplicate fails with `E_CONTRACT_DUPLICATE`.
@@ -111,9 +111,9 @@ Tool names are a stable API; descriptions stay in English to match runtime outpu
 
 ## Output
 
-- `contract.ingest`: `{ contract_no, counterparty, start_date, end_date, renewal_window_days, owner, amount, total }`, where `total` is the registry row count.
-- `contract.upcoming`: `{ as_of, within_days, expired, in_renewal_window, expiring_soon, counts }`; every item carries `days_left` (negative = expired) and `status`.
-- `contract.report`: path, filename, `sha256`, row count, bytes and `as_of`; the CSV is written under `$DSH_HOME/storages/dsh-contract-renewal/exports/`.
+- `contract_ingest`: `{ contract_no, counterparty, start_date, end_date, renewal_window_days, owner, amount, total }`, where `total` is the registry row count.
+- `contract_upcoming`: `{ as_of, within_days, expired, in_renewal_window, expiring_soon, counts }`; every item carries `days_left` (negative = expired) and `status`.
+- `contract_report`: path, filename, `sha256`, row count, bytes and `as_of`; the CSV is written under `$DSH_HOME/storages/dsh-contract-renewal/exports/`.
 
 The three groups are **mutually exclusive** — one contract appears at most once for a given `as_of`:
 
@@ -136,15 +136,15 @@ Copy this sentence:
 
 ```sh
 # 1) register one contract
-#    tool surface: contract.ingest({ contract_no: "DEMO-MSA-2026-001", counterparty: "…",
+#    tool surface: contract_ingest({ contract_no: "DEMO-MSA-2026-001", counterparty: "…",
 #                  start_date: "2026-01-01", end_date: "2026-11-15",
 #                  renewal_window_days: 60, owner: "王敏", amount: 128000 })
 
 # 2) look at one date
-#    tool surface: contract.upcoming({ as_of: "2026-12-01", within_days: 90 })
+#    tool surface: contract_upcoming({ as_of: "2026-12-01", within_days: 90 })
 
 # 3) export CSV
-#    tool surface: contract.report({ as_of: "2026-12-01", filename: "contracts-2026-12-01.csv" })
+#    tool surface: contract_report({ as_of: "2026-12-01", filename: "contracts-2026-12-01.csv" })
 ```
 
 Re-run the bundled sample and verify the golden file:
@@ -175,12 +175,12 @@ This plugin has **no Config keys** — `cordis.patch.yml` only inserts the row a
 
 | Tool | Parameter | Required | Default | Meaning |
 |---|---|---|---|---|
-| `contract.ingest` | the seven contract fields | yes | — | number, counterparty, start/end dates, renewal window, owner, amount |
-| `contract.upcoming` | `as_of` | no | today (UTC) | grouping date, `YYYY-MM-DD`; pass it explicitly to reproduce “today” |
-| `contract.upcoming` | `within_days` | no | `90` | the N of “due within N days”, integer 0–3650 |
-| `contract.report` | `as_of` | no | today (UTC) | grouping date used for the export |
-| `contract.report` | `within_days` | no | `90` | the N used for the export |
-| `contract.report` | `filename` | no | `contracts-<as_of>.csv` | only `[A-Za-z0-9._-]`; no paths |
+| `contract_ingest` | the seven contract fields | yes | — | number, counterparty, start/end dates, renewal window, owner, amount |
+| `contract_upcoming` | `as_of` | no | today (UTC) | grouping date, `YYYY-MM-DD`; pass it explicitly to reproduce “today” |
+| `contract_upcoming` | `within_days` | no | `90` | the N of “due within N days”, integer 0–3650 |
+| `contract_report` | `as_of` | no | today (UTC) | grouping date used for the export |
+| `contract_report` | `within_days` | no | `90` | the N used for the export |
+| `contract_report` | `filename` | no | `contracts-<as_of>.csv` | only `[A-Za-z0-9._-]`; no paths |
 
 Profile patch example (no config block, only the identity row):
 
@@ -236,7 +236,7 @@ Write: `$DSH_HOME/storages/dsh-contract-renewal/` (`contracts.jsonl` and `export
 Network: no.  
 External systems: none.
 
-`contract.upcoming` is **R0** (read-only); `contract.ingest` and `contract.report` are **R1** (local write, restricted to the directory above). `DSH_CONTRACT_HOME` overrides the local write root for tests; the default is exactly `$DSH_HOME/storages/dsh-contract-renewal`.
+`contract_upcoming` is **R0** (read-only); `contract_ingest` and `contract_report` are **R1** (local write, restricted to the directory above). `DSH_CONTRACT_HOME` overrides the local write root for tests; the default is exactly `$DSH_HOME/storages/dsh-contract-renewal`.
 
 ## Error codes
 
@@ -287,7 +287,7 @@ Public/synthetic fixtures live in `samples/quickstart/`; `ACCEPTANCE.csv` record
 | Platforms | All; local files only |
 | Data | No network, no model call, no upload |
 
-Current version `0.1.0`, 23 tests passing (`node --test test/*.test.mjs`).
+Current version `0.2.0`, 24 tests passing (`node --test test/*.test.mjs`).
 
 ## Ecosystem & quality
 

@@ -78,7 +78,7 @@ export function createTools(deps: ToolDeps) {
   const clock = deps.now ?? (() => new Date())
 
   const ingest = defineTool({
-    name: 'contract.ingest',
+    name: 'contract_ingest',
     description:
       'Register one contract (number, counterparty, start/end dates, renewal window days, owner, amount) in $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl. Dates are strict ISO YYYY-MM-DD; duplicate contract numbers fail with E_CONTRACT_DUPLICATE.',
     parameters: inputProperties,
@@ -110,7 +110,7 @@ export function createTools(deps: ToolDeps) {
   })
 
   const upcoming = defineTool({
-    name: 'contract.upcoming',
+    name: 'contract_upcoming',
     description:
       'List contracts as of a given ISO date in three mutually exclusive groups: already expired, inside the renewal window, and due within N days but not yet in the window. Returns remaining days per contract. Defaults: as_of = today (UTC), within_days = 90.',
     parameters: {
@@ -142,7 +142,7 @@ export function createTools(deps: ToolDeps) {
   })
 
   const report = defineTool({
-    name: 'contract.report',
+    name: 'contract_report',
     description:
       'Export every registered contract plus its days_left/status at as_of to $DSH_HOME/storages/dsh-contract-renewal/exports/<filename>.csv. Returns path, sha256, row count and bytes. Filenames are single safe components; traversal is rejected with E_CONTRACT_PATH_INVALID.',
     parameters: {

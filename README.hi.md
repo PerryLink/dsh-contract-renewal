@@ -45,7 +45,7 @@ dsh plugin --profile <profile> add dsh-contract-renewal
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/dsh-contract-renewal-flow-v5-dark.svg">
-  <img src="docs/assets/dsh-contract-renewal-flow-v5-light.svg" width="100%" alt="dsh-contract-renewal संरचना: लेखन पक्ष (contract.ingest) contracts.csv के 7 फ़ील्ड जाँचता है — सख्त ISO तिथियाँ, केस-असंवेदी अद्वितीय संख्या, विंडो 0–3650, राशि अधिकतम दो दशमलव — और $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl में जोड़ता है (R1, append-only); पठन पक्ष days_left = end_date − as_of को UTC दिनों में निकालकर चार क्रमिक अनन्य परीक्षण लगाता है: days_left < 0 → expired, 0 ≤ days_left ≤ w (renewal_window_days) → in_renewal_window, w < days_left ≤ N (within_days, डिफ़ॉल्ट 90) → expiring_soon, > N → केवल counts.later; दो निर्गम: contract.upcoming तीन समूह और counts देता है (R0), contract.report सभी 5 पंक्तियाँ sha256 / rows / bytes के साथ exports/ में CSV लिखता है (R1)">
+  <img src="docs/assets/dsh-contract-renewal-flow-v5-light.svg" width="100%" alt="dsh-contract-renewal संरचना: लेखन पक्ष (contract_ingest) contracts.csv के 7 फ़ील्ड जाँचता है — सख्त ISO तिथियाँ, केस-असंवेदी अद्वितीय संख्या, विंडो 0–3650, राशि अधिकतम दो दशमलव — और $DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl में जोड़ता है (R1, append-only); पठन पक्ष days_left = end_date − as_of को UTC दिनों में निकालकर चार क्रमिक अनन्य परीक्षण लगाता है: days_left < 0 → expired, 0 ≤ days_left ≤ w (renewal_window_days) → in_renewal_window, w < days_left ≤ N (within_days, डिफ़ॉल्ट 90) → expiring_soon, > N → केवल counts.later; दो निर्गम: contract_upcoming तीन समूह और counts देता है (R0), contract_report सभी 5 पंक्तियाँ sha256 / rows / bytes के साथ exports/ में CSV लिखता है (R1)">
 </picture>
 
 ## तीन चरणों में शुरुआत
@@ -80,13 +80,13 @@ dsh plugin --profile <profile> add dsh-contract-renewal
 
 ## मुख्य क्षमताएँ
 
-टूल के नाम स्थिर API हैं; विवरण रनटाइम आउटपुट से मेल खाने के लिए अंग्रेज़ी में रखे गए हैं।
+टूल के नाम स्थिर API हैं; विवरण रनटाइम आउटपुट से मेल खाने के लिए अंग्रेज़ी में रखे गए हैं। नाम केवल ASCII अक्षर, अंक और अंडरस्कोर रखते हैं और provider के `tools[].name` नियम `^[a-zA-Z0-9_-]+$` से मेल खाते हैं।
 
 | टूल | उद्देश्य | जोखिम |
 |---|---|---|
-| `contract.ingest` | एक अनुबंध `contracts.jsonl` में दर्ज करता है; गलत तिथि/डुप्लिकेट के लिए स्थिर कोड | R1 local write |
-| `contract.upcoming` | `as_of` से समूह बनाकर `days_left` देता है; डिफ़ॉल्ट आज (UTC) और 90 दिन | R0 |
-| `contract.report` | उद्धरण-एस्केप वाला CSV निर्यात करके पथ, sha256, पंक्तियाँ और बाइट देता है | R1 local write |
+| `contract_ingest` | एक अनुबंध `contracts.jsonl` में दर्ज करता है; गलत तिथि/डुप्लिकेट के लिए स्थिर कोड | R1 local write |
+| `contract_upcoming` | `as_of` से समूह बनाकर `days_left` देता है; डिफ़ॉल्ट आज (UTC) और 90 दिन | R0 |
+| `contract_report` | उद्धरण-एस्केप वाला CSV निर्यात करके पथ, sha256, पंक्तियाँ और बाइट देता है | R1 local write |
 
 - **तीन अनन्य समूह, प्रति अनुबंध एक पंक्ति** — `expired`, `in_renewal_window` और `expiring_soon` (N दिनों में देय पर अभी विंडो में नहीं); बाकी केवल `counts.later` में गिने जाते हैं, इसलिए दोहरी गिनती नहीं होती।
 - **केवल-जोड़ने वाली लोकल रजिस्ट्री** — `$DSH_HOME/storages/dsh-contract-renewal/contracts.jsonl` में प्रति पंक्ति एक JSON ऑब्जेक्ट; अनुबंध की फ़ाइलें कभी पढ़ी या बदली नहीं जातीं, और नवीनीकरण नए नंबर से दर्ज होता है ताकि इतिहास बना रहे।
@@ -103,7 +103,7 @@ dsh plugin --profile <profile> add dsh-contract-renewal
 
 ## इनपुट
 
-- एक रजिस्ट्री CSV या प्रति अनुबंध एक `contract.ingest` कॉल। हर पंक्ति में सात फ़ील्ड:
+- एक रजिस्ट्री CSV या प्रति अनुबंध एक `contract_ingest` कॉल। हर पंक्ति में सात फ़ील्ड:
   `contract_no` (अद्वितीय), `counterparty`, `start_date`, `end_date` (सख्त `YYYY-MM-DD`), `renewal_window_days` (0–3650 पूर्णांक), `owner`, `amount` (ऋणात्मक नहीं, अधिकतम दो दशमलव)।
 - तिथियाँ वास्तविक ISO तिथियाँ होनी चाहिए। `2026-02-30`, `2026-13-01` और `2026/12/01` सभी `E_CONTRACT_DATE_INVALID` देते हैं।
 - एक रजिस्ट्री के भीतर अनुबंध संख्याएँ केस-असंवेदनशील रूप से अद्वितीय हैं; डुप्लिकेट `E_CONTRACT_DUPLICATE` देता है।
@@ -111,9 +111,9 @@ dsh plugin --profile <profile> add dsh-contract-renewal
 
 ## आउटपुट
 
-- `contract.ingest`: `{ contract_no, counterparty, start_date, end_date, renewal_window_days, owner, amount, total }`, जहाँ `total` रजिस्ट्री की पंक्ति-संख्या है।
-- `contract.upcoming`: `{ as_of, within_days, expired, in_renewal_window, expiring_soon, counts }`; हर आइटम में `days_left` (ऋणात्मक = समाप्त) और `status` है।
-- `contract.report`: पथ, फ़ाइल नाम, `sha256`, पंक्तियाँ, बाइट और `as_of`; CSV `$DSH_HOME/storages/dsh-contract-renewal/exports/` में लिखा जाता है।
+- `contract_ingest`: `{ contract_no, counterparty, start_date, end_date, renewal_window_days, owner, amount, total }`, जहाँ `total` रजिस्ट्री की पंक्ति-संख्या है।
+- `contract_upcoming`: `{ as_of, within_days, expired, in_renewal_window, expiring_soon, counts }`; हर आइटम में `days_left` (ऋणात्मक = समाप्त) और `status` है।
+- `contract_report`: पथ, फ़ाइल नाम, `sha256`, पंक्तियाँ, बाइट और `as_of`; CSV `$DSH_HOME/storages/dsh-contract-renewal/exports/` में लिखा जाता है।
 
 तीन समूह **परस्पर अनन्य** हैं — किसी `as_of` पर एक अनुबंध अधिकतम एक बार आता है:
 
@@ -136,15 +136,15 @@ dsh plugin --profile <profile> add dsh-contract-renewal
 
 ```sh
 # 1) एक अनुबंध दर्ज करें
-#    टूल सतह: contract.ingest({ contract_no: "DEMO-MSA-2026-001", counterparty: "…",
+#    टूल सतह: contract_ingest({ contract_no: "DEMO-MSA-2026-001", counterparty: "…",
 #              start_date: "2026-01-01", end_date: "2026-11-15",
 #              renewal_window_days: 60, owner: "王敏", amount: 128000 })
 
 # 2) किसी तिथि पर तीन समूह देखें
-#    टूल सतह: contract.upcoming({ as_of: "2026-12-01", within_days: 90 })
+#    टूल सतह: contract_upcoming({ as_of: "2026-12-01", within_days: 90 })
 
 # 3) CSV निर्यात करें
-#    टूल सतह: contract.report({ as_of: "2026-12-01", filename: "contracts-2026-12-01.csv" })
+#    टूल सतह: contract_report({ as_of: "2026-12-01", filename: "contracts-2026-12-01.csv" })
 ```
 
 साथ दिया नमूना दोबारा चलाएँ और गोल्डन फ़ाइल जाँचें:
@@ -175,12 +175,12 @@ later:   DEMO-SUPPORT-2026-005 2027-03-31 (120 days) — केवल counts.lat
 
 | टूल | पैरामीटर | आवश्यक | डिफ़ॉल्ट | अर्थ |
 |---|---|---|---|---|
-| `contract.ingest` | सात अनुबंध फ़ील्ड | हाँ | — | संख्या, पक्षकार, आरंभ/समाप्ति तिथि, नवीनीकरण विंडो, ज़िम्मेदार व्यक्ति, राशि |
-| `contract.upcoming` | `as_of` | नहीं | आज (UTC) | समूहन तिथि, `YYYY-MM-DD`; «आज» दोहराने के लिए स्पष्ट रूप से दें |
-| `contract.upcoming` | `within_days` | नहीं | `90` | «N दिनों में देय» का N, 0–3650 पूर्णांक |
-| `contract.report` | `as_of` | नहीं | आज (UTC) | निर्यात में प्रयुक्त समूहन तिथि |
-| `contract.report` | `within_days` | नहीं | `90` | निर्यात में प्रयुक्त N |
-| `contract.report` | `filename` | नहीं | `contracts-<as_of>.csv` | केवल `[A-Za-z0-9._-]`; कोई पथ नहीं |
+| `contract_ingest` | सात अनुबंध फ़ील्ड | हाँ | — | संख्या, पक्षकार, आरंभ/समाप्ति तिथि, नवीनीकरण विंडो, ज़िम्मेदार व्यक्ति, राशि |
+| `contract_upcoming` | `as_of` | नहीं | आज (UTC) | समूहन तिथि, `YYYY-MM-DD`; «आज» दोहराने के लिए स्पष्ट रूप से दें |
+| `contract_upcoming` | `within_days` | नहीं | `90` | «N दिनों में देय» का N, 0–3650 पूर्णांक |
+| `contract_report` | `as_of` | नहीं | आज (UTC) | निर्यात में प्रयुक्त समूहन तिथि |
+| `contract_report` | `within_days` | नहीं | `90` | निर्यात में प्रयुक्त N |
+| `contract_report` | `filename` | नहीं | `contracts-<as_of>.csv` | केवल `[A-Za-z0-9._-]`; कोई पथ नहीं |
 
 प्रोफ़ाइल पैच उदाहरण (कोई config ब्लॉक नहीं, केवल पहचान पंक्ति):
 
@@ -236,7 +236,7 @@ later:   DEMO-SUPPORT-2026-005 2027-03-31 (120 days) — केवल counts.lat
 नेटवर्क: नहीं।  
 बाहरी सिस्टम: कोई नहीं।
 
-`contract.upcoming` **R0** है (केवल-पठन); `contract.ingest` और `contract.report` **R1** हैं (लोकल लेखन, केवल ऊपर की डायरेक्टरी तक सीमित)। परीक्षणों में `DSH_CONTRACT_HOME` लोकल राइट रूट बदलता है; डिफ़ॉल्ट ठीक `$DSH_HOME/storages/dsh-contract-renewal` है।
+`contract_upcoming` **R0** है (केवल-पठन); `contract_ingest` और `contract_report` **R1** हैं (लोकल लेखन, केवल ऊपर की डायरेक्टरी तक सीमित)। परीक्षणों में `DSH_CONTRACT_HOME` लोकल राइट रूट बदलता है; डिफ़ॉल्ट ठीक `$DSH_HOME/storages/dsh-contract-renewal` है।
 
 ## त्रुटि कोड
 
@@ -287,7 +287,7 @@ later:   DEMO-SUPPORT-2026-005 2027-03-31 (120 days) — केवल counts.lat
 | प्लेटफ़ॉर्म | सभी; केवल लोकल फ़ाइलें |
 | डेटा | नेटवर्क नहीं, मॉडल कॉल नहीं, अपलोड नहीं |
 
-वर्तमान संस्करण `0.1.0`, 23 परीक्षण पास (`node --test test/*.test.mjs`)।
+वर्तमान संस्करण `0.2.0`, 24 परीक्षण पास (`node --test test/*.test.mjs`)।
 
 ## पारिस्थितिकी और गुणवत्ता
 
