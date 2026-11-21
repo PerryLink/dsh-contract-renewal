@@ -155,6 +155,11 @@ node samples/quickstart/run.mjs --check
 
 ![dsh-contract-renewal quickstart का वास्तविक टर्मिनल आउटपुट](docs/assets/quickstart.png)
 
+![dsh-contract-renewal quickstart का वास्तविक टर्मिनल आउटपुट](docs/assets/dsh-contract-renewal-demo.gif)
+
+*उसी असली रन का एनिमेटेड संस्करण।*
+
+
 नमूना पाँच सिंथेटिक `DEMO-*` अनुबंध हैं, `as_of=2026-12-01` और `within_days=90` के साथ:
 
 ```text

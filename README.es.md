@@ -155,6 +155,11 @@ node samples/quickstart/run.mjs --check
 
 ![Salida real de terminal del quickstart de dsh-contract-renewal](docs/assets/quickstart.png)
 
+![Salida real de terminal del quickstart de dsh-contract-renewal](docs/assets/dsh-contract-renewal-demo.gif)
+
+*La versión animada de la misma ejecución.*
+
+
 La muestra son cinco contratos sintéticos `DEMO-*` con `as_of=2026-12-01` y `within_days=90`:
 
 ```text

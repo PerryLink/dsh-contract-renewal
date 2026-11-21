@@ -155,6 +155,11 @@ node samples/quickstart/run.mjs --check
 
 ![dsh-contract-renewal quickstart 真实运行输出](docs/assets/quickstart.png)
 
+![dsh-contract-renewal quickstart 真实运行输出](docs/assets/dsh-contract-renewal-demo.gif)
+
+*同一段真实运行的动图版本。*
+
+
 样例是 5 份合成合同（`DEMO-*`，无真实主体/金额），`as_of=2026-12-01`、`within_days=90`：
 
 ```text
