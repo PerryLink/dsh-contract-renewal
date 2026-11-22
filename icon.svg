@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="dsh-contract-renewal">
+  <rect width="128" height="128" rx="24" fill="hsl(44 45% 18%)"/>
+  <circle cx="43" cy="41" r="30" fill="none" stroke="hsl(84 70% 62%)" stroke-width="6"/>
+  <path d="M73 41 L101 56 L73 71 Z" fill="hsl(244 65% 58%)"/>
+</svg>

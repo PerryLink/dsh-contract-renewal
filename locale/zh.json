@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Contract renewal",
+    "description": "登记合同 → 按指定日期看已过期 / 续签窗口 / N 天内到期 → 导出 CSV。"
+  }
+}

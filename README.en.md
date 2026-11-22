@@ -293,7 +293,7 @@ Public/synthetic fixtures live in `samples/quickstart/`; `ACCEPTANCE.csv` record
 | Platforms | All; local files only |
 | Data | No network, no model call, no upload |
 
-Current version `0.2.1`, 24 tests passing (`node --test test/*.test.mjs`).
+Current version `0.2.2`, 24 tests passing (`node --test test/*.test.mjs`).
 
 ## Ecosystem & quality
 
