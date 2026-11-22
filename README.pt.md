@@ -11,6 +11,8 @@
 
 Uma ferramenta de registro de vencimentos de contratos puramente local para o DeepSeek Harness: sete campos por linha, três grupos mutuamente exclusivos e os dias restantes num relance — só aritmética de datas e do registro, sem analisar o texto do contrato, sem lembretes e sem rede.
 
+Última verificação: DeepSeek Harness `dsh-v0.2.3-alpha.1` (2026-11-22).
+
 [Instalar](#instalação-em-três-passos) · [Configuração](#configuração) · [FAQ](#faq) · [简体中文](README.md) · [English](README.en.md) · [Español](README.es.md) · [Português](README.pt.md) · [हिन्दी](README.hi.md)
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-3366CC?style=flat-square&labelColor=2B3245)](LICENSE)
@@ -159,7 +161,6 @@ node samples/quickstart/run.mjs --check
 
 *A versão animada da mesma execução.*
 
-
 A amostra são cinco contratos sintéticos `DEMO-*` com `as_of=2026-12-01` e `within_days=90`:
 
 ```text
@@ -292,7 +293,7 @@ Os fixtures públicos/sintéticos ficam em `samples/quickstart/`; o `ACCEPTANCE.
 | Plataformas | Todas; apenas arquivos locais |
 | Dados | Sem rede, sem chamada de modelo, sem upload |
 
-Versão atual `0.2.0`, 24 testes passando (`node --test test/*.test.mjs`).
+Versão atual `0.2.1`, 24 testes passando (`node --test test/*.test.mjs`).
 
 ## Ecossistema e qualidade
 

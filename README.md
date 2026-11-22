@@ -11,6 +11,8 @@
 
 面向 DeepSeek Harness 的纯本地合同到期登记工具：七个字段一行，三组互斥、剩余天数一目了然，只做日期与登记表计算——不解析合同正文、不发提醒、不联网。
 
+最近一次核验：DeepSeek Harness `dsh-v0.2.3-alpha.1`（2026-11-22）。
+
 [安装](#三步上手) · [配置](#配置) · [FAQ](#faq) · [简体中文](README.md) · [English](README.en.md) · [Español](README.es.md) · [Português](README.pt.md) · [हिन्दी](README.hi.md)
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-3366CC?style=flat-square&labelColor=2B3245)](LICENSE)
@@ -159,7 +161,6 @@ node samples/quickstart/run.mjs --check
 
 *同一段真实运行的动图版本。*
 
-
 样例是 5 份合成合同（`DEMO-*`，无真实主体/金额），`as_of=2026-12-01`、`within_days=90`：
 
 ```text
@@ -292,7 +293,7 @@ profile patch 示例（没有 config 段，只有身份行）：
 | 平台 | 全平台；仅本地文件 |
 | 数据 | 不联网、不调用模型、不上传 |
 
-当前版本 `0.2.0`，24 项测试通过（`node --test test/*.test.mjs`）。
+当前版本 `0.2.1`，24 项测试通过（`node --test test/*.test.mjs`）。
 
 ## 生态与质量
 

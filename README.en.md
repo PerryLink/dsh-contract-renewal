@@ -11,6 +11,8 @@
 
 A local-only contract expiry register for DeepSeek Harness: seven fields per row, three mutually exclusive groups, remaining days at a glance — date and registry arithmetic only, with no contract parsing, no reminders and no network.
 
+Last verified on DeepSeek Harness `dsh-v0.2.3-alpha.1` (2026-11-22).
+
 [Install](#three-step-setup) · [Configuration](#configuration) · [FAQ](#faq) · [简体中文](README.md) · [English](README.en.md) · [Español](README.es.md) · [Português](README.pt.md) · [हिन्दी](README.hi.md)
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-3366CC?style=flat-square&labelColor=2B3245)](LICENSE)
@@ -159,7 +161,6 @@ node samples/quickstart/run.mjs --check
 
 *The animated version of the same run.*
 
-
 The sample is five synthetic `DEMO-*` contracts with `as_of=2026-12-01` and `within_days=90`:
 
 ```text
@@ -292,7 +293,7 @@ Public/synthetic fixtures live in `samples/quickstart/`; `ACCEPTANCE.csv` record
 | Platforms | All; local files only |
 | Data | No network, no model call, no upload |
 
-Current version `0.2.0`, 24 tests passing (`node --test test/*.test.mjs`).
+Current version `0.2.1`, 24 tests passing (`node --test test/*.test.mjs`).
 
 ## Ecosystem & quality
 

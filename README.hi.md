@@ -11,6 +11,8 @@
 
 DeepSeek Harness के लिए पूरी तरह लोकल अनुबंध-समाप्ति रजिस्ट्री: हर पंक्ति में सात फ़ील्ड, तीन परस्पर अनन्य समूह और शेष दिन एक नज़र में — केवल तिथि और रजिस्ट्री का गणित, अनुबंध का पाठ पढ़ना नहीं, अनुस्मारक नहीं, नेटवर्क नहीं।
 
+अंतिम सत्यापन: DeepSeek Harness `dsh-v0.2.3-alpha.1` (2026-11-22).
+
 [इंस्टॉल](#तीन-चरणों-में-शुरुआत) · [कॉन्फ़िगरेशन](#कॉन्फ़िगरेशन) · [FAQ](#faq) · [简体中文](README.md) · [English](README.en.md) · [Español](README.es.md) · [Português](README.pt.md) · [हिन्दी](README.hi.md)
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-3366CC?style=flat-square&labelColor=2B3245)](LICENSE)
@@ -159,7 +161,6 @@ node samples/quickstart/run.mjs --check
 
 *उसी असली रन का एनिमेटेड संस्करण।*
 
-
 नमूना पाँच सिंथेटिक `DEMO-*` अनुबंध हैं, `as_of=2026-12-01` और `within_days=90` के साथ:
 
 ```text
@@ -292,7 +293,7 @@ later:   DEMO-SUPPORT-2026-005 2027-03-31 (120 days) — केवल counts.lat
 | प्लेटफ़ॉर्म | सभी; केवल लोकल फ़ाइलें |
 | डेटा | नेटवर्क नहीं, मॉडल कॉल नहीं, अपलोड नहीं |
 
-वर्तमान संस्करण `0.2.0`, 24 परीक्षण पास (`node --test test/*.test.mjs`)।
+वर्तमान संस्करण `0.2.1`, 24 परीक्षण पास (`node --test test/*.test.mjs`)।
 
 ## पारिस्थितिकी और गुणवत्ता
 
